@@ -1,0 +1,52 @@
+{
+    "Type": "Normal",
+    "Cuda": true,
+    "ThreadCount": 10,
+    "LearningRate": 0.6,
+    "BatchSize": 1,
+    "LearningRateType": "Static",
+    "Balance": "GaussianStandartization",
+    "LossFunction": "MeanSquaredError",
+    "Gradient": "Static",
+    "Metrics": "Test",
+    "LogLoss": "Full",
+    "LossCalculation": "Full",
+    "Layers": [{
+            "Size": 784,
+            "Type": "InputLayer",
+            "DropuOutSize": 0,
+            "Bias": 0,
+            "ActivationFunction": "None"
+        }, {
+            "Size": 800,
+            "Type": "HiddenLayer",
+            "DropuOutSize": 0,
+            "Bias": 1,
+            "ActivationFunction": "Sigmoid"
+        }, {
+            "Size": 500,
+            "Type": "HiddenLayer",
+            "DropuOutSize": 0,
+            "Bias": 1,
+            "ActivationFunction": "Sigmoid"
+        }, {
+            "Size": 250,
+            "Type": "HiddenLayer",
+            "DropuOutSize": 0,
+            "Bias": 1,
+            "ActivationFunction": "Sigmoid"
+        }, {
+            "Size": 100,
+            "Type": "HiddenLayer",
+            "DropuOutSize": 0,
+            "Bias": 1,
+            "ActivationFunction": "Sigmoid"
+        }, {
+            "Size": 10,
+            "Type": "OutputLayer",
+            "DropuOutSize": 0,
+            "Bias": 0,
+            "ActivationFunction": "Sigmoid"
+        }
+    ]
+}
