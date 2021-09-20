@@ -355,7 +355,13 @@ void readDataAndTest()
 	std::vector<std::vector<float>> labeledTarget;
 	std::vector<std::vector<float>> testLabeledTarget;
 	ReadData(_trainingSet, _testSet, labeledTarget, testLabeledTarget);
+	std::vector<int> index;
 	trainingSet = new MnistData[_trainingSet.size()];
+	index.resize(_trainingSet.size());
+	for (size_t i = _trainingSet.size(); i--;)
+	{
+		index[i] = i;
+	}
 	testSet = new MnistData[_testSet.size()];
 	trainingSetSize = _trainingSet.size();
 	testSetSize = _testSet.size();
@@ -409,8 +415,7 @@ void readDataAndTest()
 			try
 			{
 				size_t seed = std::chrono::system_clock::now().time_since_epoch().count();
-				//shuffle(trainingSet.begin(), trainingSet.end(), std::default_random_engine(seed));
-				// std::random_shuffle(trainingSet[0], trainingSet[trainingSet->setSize]);
+				//shuffle(index.begin(), index.end(), std::default_random_engine(seed));
 				clock_t beginInside = clock();
 
 				if (neuralNetwork.Type == NeuralEnums::NetworkType::Normal)
@@ -419,21 +424,21 @@ void readDataAndTest()
 					{
 						if (neuralNetwork.BatchSize == 1)
 						{
-							neuralNetwork.Layers[0].Outputs = trainingSet[i].set;
+							neuralNetwork.Layers[0].Outputs = trainingSet[index[i]].set;
 							if (neuralNetwork.Type == NeuralEnums::NetworkType::Normal)
-								neuralNetwork.Layers[neuralNetwork.LayersSize - 1].Target = trainingSet[i].label;
+								neuralNetwork.Layers[neuralNetwork.LayersSize - 1].Target = trainingSet[index[i]].label;
 							else
-								neuralNetwork.Layers[neuralNetwork.LayersSize - 1].Target = trainingSet[i].set;
+								neuralNetwork.Layers[neuralNetwork.LayersSize - 1].Target = trainingSet[index[i]].set;
 						}
 						else
 						{
 							for (size_t batch = 0; batch < neuralNetwork.BatchSize; batch++)
 							{
-								neuralNetwork.Layers[0].OutputsBatch[batch] = trainingSet[i * neuralNetwork.BatchSize + batch].set;
+								neuralNetwork.Layers[0].OutputsBatch[batch] = trainingSet[index[i * neuralNetwork.BatchSize + batch]].set;
 								if (neuralNetwork.Type == NeuralEnums::NetworkType::Normal)
-									neuralNetwork.Layers[neuralNetwork.LayersSize - 1].TargetsBatch[batch] = trainingSet[i * neuralNetwork.BatchSize + batch].label;
+									neuralNetwork.Layers[neuralNetwork.LayersSize - 1].TargetsBatch[batch] = trainingSet[index[i * neuralNetwork.BatchSize + batch]].label;
 								else
-									neuralNetwork.Layers[neuralNetwork.LayersSize - 1].TargetsBatch[batch] = trainingSet[i * neuralNetwork.BatchSize + batch].set;
+									neuralNetwork.Layers[neuralNetwork.LayersSize - 1].TargetsBatch[batch] = trainingSet[index[i * neuralNetwork.BatchSize + batch]].set;
 							}
 						}
 
@@ -446,15 +451,14 @@ void readDataAndTest()
 							if (i % 1000 == 0 && i != 0)
 							{
 								totalcounter += 1000;
-								cout << std::to_string(totalcounter) + "/" + std::to_string(total * globalEpochs) << endl;
-								//ui.textEdit->append(QString::fromStdString("loss: " + std::to_string(loss) + " ;"));
+								cout << std::to_string(totalcounter) + "/" + std::to_string(total * globalEpochs) << "\r";
 							}
 						}
 						else
 						{
 							totalcounter++;
 							if (i % 100 == 0 && i != 0)
-								cout << std::to_string(totalcounter) + "/" + std::to_string(total * globalEpochs / neuralNetwork.BatchSize) << endl;
+								cout << std::to_string(totalcounter) + "/" + std::to_string(total * globalEpochs / neuralNetwork.BatchSize) << "\r";
 						}
 					}
 				}
@@ -464,21 +468,21 @@ void readDataAndTest()
 					{
 						if (neuralNetwork.BatchSize == 1)
 						{
-							neuralNetwork.Layers[0].Outputs = trainingSet[i].set;
+							neuralNetwork.Layers[0].Outputs = trainingSet[index[i]].set;
 							if (neuralNetwork.Type == NeuralEnums::NetworkType::Normal)
-								neuralNetwork.Layers[neuralNetwork.LayersSize - 1].Target = trainingSet[i].label;
+								neuralNetwork.Layers[neuralNetwork.LayersSize - 1].Target = trainingSet[index[i]].label;
 							else
-								neuralNetwork.Layers[neuralNetwork.LayersSize - 1].Target = trainingSet[i].set;
+								neuralNetwork.Layers[neuralNetwork.LayersSize - 1].Target = trainingSet[index[i]].set;
 						}
 						else
 						{
 							for (size_t batch = 0; batch < neuralNetwork.BatchSize; batch++)
 							{
-								neuralNetwork.Layers[0].OutputsBatch[batch] = trainingSet[i * neuralNetwork.BatchSize + batch].set;
+								neuralNetwork.Layers[0].OutputsBatch[batch] = trainingSet[index[i * neuralNetwork.BatchSize + batch]].set;
 								if (neuralNetwork.Type == NeuralEnums::NetworkType::Normal)
-									neuralNetwork.Layers[neuralNetwork.LayersSize - 1].TargetsBatch[batch] = trainingSet[i * neuralNetwork.BatchSize + batch].label;
+									neuralNetwork.Layers[neuralNetwork.LayersSize - 1].TargetsBatch[batch] = trainingSet[index[i * neuralNetwork.BatchSize + batch]].label;
 								else
-									neuralNetwork.Layers[neuralNetwork.LayersSize - 1].TargetsBatch[batch] = trainingSet[i * neuralNetwork.BatchSize + batch].set;
+									neuralNetwork.Layers[neuralNetwork.LayersSize - 1].TargetsBatch[batch] = trainingSet[index[i * neuralNetwork.BatchSize + batch]].set;
 							}
 						}
 
@@ -492,7 +496,6 @@ void readDataAndTest()
 								totalcounter += 1000;
 
 								cout << std::to_string(totalcounter) + "/" + std::to_string(total * globalEpochs) << "\r";
-								//ui.textEdit->append(QString::fromStdString("loss: " + std::to_string(loss) + " ;"));
 							}
 						}
 						else
