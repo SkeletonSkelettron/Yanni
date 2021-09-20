@@ -80,43 +80,43 @@ void NeuralNetwork::InitializeWeights()
 		Layers[i].WeightsSize = size;
 		Layers[i].MultipliedSums = new float[size] {0};
 
-		for (int j = 0; j < size; j++)
-		{
-			Layers[i].Weights[j] = Layers[i].UsingBias && j % Layers[i - 1].Size == 0
-				? 1.0
-				: rand() % 100;
-		}
-		if (Layers[i].ActivationFunction == NeuralEnums::ActivationFunction::Sigmoid)
-		{
-			int tmp[2];
-			float start = -1.0;
-			float end = 1.0;
-			StandartizeLinearContract(Layers[i].Weights, size, tmp, start, end);
-		}
-		else
-		{
-			int tmp[2];
-			float start = -0.07;
-			float end = 0.07;
-			StandartizeLinearContract(Layers[i].Weights, size, tmp, start, end);
-		}
-		if (Layers[i - 1].UsingBias)
-			for (int j = 0; j < size; j++)
-			{
-				if (j % Layers[i - 1].Size == 0)
-					Layers[i].Weights[j] = 1L;
-			}
+		//for (int j = 0; j < size; j++)
+		//{
+		//	Layers[i].Weights[j] = Layers[i].UsingBias && j % Layers[i - 1].Size == 0
+		//		? 1.0
+		//		: rand() % 100;
+		//}
+		//if (Layers[i].ActivationFunction == NeuralEnums::ActivationFunction::Sigmoid)
+		//{
+		//	int tmp[2];
+		//	float start = -1.0;
+		//	float end = 1.0;
+		//	StandartizeLinearContract(Layers[i].Weights, size, tmp, start, end);
+		//}
+		//else
+		//{
+		//	int tmp[2];
+		//	float start = -0.07;
+		//	float end = 0.07;
+		//	StandartizeLinearContract(Layers[i].Weights, size, tmp, start, end);
+		//}
+		//if (Layers[i - 1].UsingBias)
+		//	for (int j = 0; j < size; j++)
+		//	{
+		//		if (j % Layers[i - 1].Size == 0)
+		//			Layers[i].Weights[j] = 1L;
+		//	}
 		//std::ofstream oData;
 		//oData.open("weights" + std::to_string(i) + ".txt");
 		//for (int count = 0; count < size; count++) {
 		//	oData << std::setprecision(100) << Layers[i].Weights[count] << std::endl;
 		//}
 
-		/*std::ifstream inData;
+		std::ifstream inData;
 		inData.open("weights" + std::to_string(i) + ".txt");
 		for (size_t count = 0; count < Layers[i - 1].Size * (Layers[i].Size - (Layers[i].UsingBias ? 1 : 0)); count++) {
 			inData >> std::setprecision(100) >> Layers[i].Weights[count];
-		}*/
+		}
 	}
 }
 

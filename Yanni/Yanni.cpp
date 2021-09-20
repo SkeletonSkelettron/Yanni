@@ -355,8 +355,9 @@ void readDataAndTest()
 	std::vector<std::vector<float>> labeledTarget;
 	std::vector<std::vector<float>> testLabeledTarget;
 	ReadData(_trainingSet, _testSet, labeledTarget, testLabeledTarget);
-	std::vector<int> index;
+	
 	trainingSet = new MnistData[_trainingSet.size()];
+	std::vector<int> index;
 	index.resize(_trainingSet.size());
 	for (size_t i = _trainingSet.size(); i--;)
 	{
@@ -415,7 +416,7 @@ void readDataAndTest()
 			try
 			{
 				size_t seed = std::chrono::system_clock::now().time_since_epoch().count();
-				//shuffle(index.begin(), index.end(), std::default_random_engine(seed));
+				shuffle(index.begin(), index.end(), std::default_random_engine(seed));
 				clock_t beginInside = clock();
 
 				if (neuralNetwork.Type == NeuralEnums::NetworkType::Normal)
