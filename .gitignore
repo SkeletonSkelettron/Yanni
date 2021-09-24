@@ -361,3 +361,8 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/Yanni/weights1.txt
+/Yanni/weights2.txt
+/Yanni/weights3.txt
+/Yanni/weights4.txt
+/Yanni/weights5.txt

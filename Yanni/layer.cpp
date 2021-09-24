@@ -184,7 +184,7 @@ void Layer::CalcInputsDelegate(
 		{
 			k = IndexVector[kk];
 			result = 0.0;
-			for (size_t ii = prevLayerIndexVectorSize; ii--;)
+			for (size_t ii = 0; ii< prevLayerIndexVectorSize; ii++)
 			{
 				i = prevLayerIndexes[ii];
 				result += prevLayerOutput[i] * Weights[(k - biasShift) * prevLayerSize + i];

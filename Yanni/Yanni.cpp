@@ -3,7 +3,7 @@
 
 using namespace std;
 
-void test()
+void testNet()
 {
 	float* ar = new float[4];
 	//bias test case
@@ -416,7 +416,7 @@ void readDataAndTest()
 			try
 			{
 				size_t seed = std::chrono::system_clock::now().time_since_epoch().count();
-				shuffle(index.begin(), index.end(), std::default_random_engine(seed));
+				//shuffle(index.begin(), index.end(), std::default_random_engine(seed));
 				clock_t beginInside = clock();
 
 				if (neuralNetwork.Type == NeuralEnums::NetworkType::Normal)
@@ -590,7 +590,7 @@ void readDataAndTest()
 int main()
 {
 	std::thread test(readDataAndTest);
-	//std::thread test(test);
+	//std::thread test(testNet);
 	test.join();
 	return 0;
 }
