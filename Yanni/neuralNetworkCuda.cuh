@@ -23,6 +23,7 @@ struct NeuralNetworkCuda
 	int LossCalculation;
 	int LogLoss;
 	int BatchSize;
+	int MaxBachSize;
 	bool Cuda;
 	LayerCuda* Layers;
 	int LayersSize;
@@ -250,24 +251,13 @@ struct NeuralNetworkCuda
 			result += CalculateLossFunctionCuda(LossFunctionType, Layers[LayersSize - 1].GetOutputsBatch(i), Layers[LayersSize - 1].GetTargetsBatch(i), 0, Layers[LayersSize - 1].Size, Layers[LayersSize - 1].Size);
 		}
 		loss = result;
+
+		//if (Type == static_cast<int>(NeuralEnums::NetworkType::AutoEncoder) && AutoEncoderType == static_cast<int>(NeuralEnums::AutoEncoderType::Sparce))
+		//{
+		//	klbResult += KullbackLeiblerDivergenceCuda(Layers[1].RoHat, ro, klbstart, klbend);
+		//}
+		//loss = result + klbResult;
 	}
-
-	__device__ void CalculateLossSub(size_t start, size_t end, size_t klbstart, size_t  klbend, float& loss)
-	{
-		float result = 0.0;
-		float klbResult = 0.0;
-		for (size_t i = start; i < end; i++)
-		{
-			result += CalculateLossFunctionCuda(LossFunctionType, Layers[LayersSize - 1].Outputs, Layers[LayersSize - 1].Target, start, end, Layers[LayersSize - 1].Size);
-		}
-
-		if (Type == static_cast<int>(NeuralEnums::NetworkType::AutoEncoder) && AutoEncoderType == static_cast<int>(NeuralEnums::AutoEncoderType::Sparce))
-		{
-			klbResult += KullbackLeiblerDivergenceCuda(Layers[1].RoHat, ro, klbstart, klbend);
-		}
-		loss = result + klbResult;
-	}
-
 
 
 	__device__ float GetLearningRateMultipliedByGrad(float& gradient, int& iterator, int& j)
@@ -385,6 +375,16 @@ struct NeuralNetworkCuda
 		default:
 			break;
 		}
+	}
+
+	float getNetworkSize()
+	{
+		float result = 0;
+		for (size_t i = LayersSize; i--;)
+		{
+			result += Layers[i].getLayerSize();
+		}
+		return result;
 	}
 
 };

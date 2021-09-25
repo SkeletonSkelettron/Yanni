@@ -17,14 +17,11 @@ __device__ struct LayerCuda
 	size_t* IndexVector;
 	size_t* IndexVectorForNextLayer;
 	int* DropoutNeurons;
-	float* Inputs;
 	float* Weights;
 	float* TempWeights;
-	float* Outputs;
 	float* Gradients;
 	float* GradientsLR;
 	float* Parameters;
-	float* Target;
 	float* InputsBatch;
 	float* GradientsBatch;
 	float* OutputsBatch;
@@ -72,7 +69,6 @@ __device__ struct LayerCuda
 
 	//---------------------------------------------------
 	__device__ void CalculateInputs(
-		float* prevLayerOutput,
 		int prevLayerSize,
 		float* prevLayerOutputBatch,
 		size_t* prevLayerIndexes,
@@ -112,6 +108,10 @@ __device__ struct LayerCuda
 			GetOutputsBatch(batch, 0) = GetInputsBatch(batch, 0);
 	}
 
+	float getLayerSize()
+	{
+		return BatchSize * Size * sizeof(float) * 2 + WeightsSize * BatchSize * sizeof(float) + (LayerType == 2 ? BatchSize * Size * sizeof(float) * 2.0f : 0.0f);
+	}
 };
 
 #endif //LAYERCUDA_H
