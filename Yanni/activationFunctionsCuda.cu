@@ -2,8 +2,9 @@
 #include <vector>
 #include <math.h>
 #include <cmath>
+#include "enums.h"
 //#include "statisticfunctions.h" 
-
+#include <stdexcept>
 	//void BalanceWith(std::vector <float>& dataset, NeuralEnums::BalanceType BalancingMethod)
 	//{
 	//	switch (BalancingMethod)
@@ -28,12 +29,12 @@
 	//}
 
 
-__device__ void ActivateWithCuda(
+void ActivateWithCuda(
 	float* inputs,
 	float* outputs,
-	size_t* indexVector,
-	size_t& start,
-	size_t& end,
+	int* indexVector,
+	int& start,
+	int& end,
 	int& function)
 {
 	switch (function)
@@ -79,92 +80,92 @@ __device__ void ActivateWithCuda(
 }
 
 
-__device__ inline float SoftSignCuda(float& x)
+inline float SoftSignCuda(float& x)
 {
-	return x / (abs(x) + 1.0f);
+	return x / (abs(x) + 1);
 }
-__device__ inline float SoftSignDerivativeCuda(float& x)
+inline float SoftSignDerivativeCuda(float& x)
 {
-	return  1.0f / pow(1.0f + abs(x), 2);
-}
-
-__device__ inline float SoftPlusCuda(float& x)
-{
-	return log(1.0f + exp(x));
-}
-__device__ inline float SoftPlusDerivativeCuda(float& x)
-{
-	return  1.0f / (1.0f + exp(-x));
-}
-// __device__ inline float SoftMaxCuda(float& x, float* layerInputs, int* indexVector, int& indexVectorSize)
-// {
-// 	float sum = 0.0;
-// 	for (int i = 0; i < indexVectorSize; i++)
-// 	{
-// 		sum += exp(layerInputs[indexVector[i]]);
-// 	}
-// 	return exp(x) / sum;
-// }
-
-// __device__ inline float SoftMaxDerivativeCuda(float& x, float* inputs, int* indexVector, int& indexVectorSize)
-// {
-// 	float y = SoftMaxCuda(x, inputs, indexVector, indexVectorSize);
-// 	return y * (1.0 - y);
-// }
-
-__device__ inline float SigmoidCuda(float& x)
-{
-	return  1.0f / (1.0f + exp(-x));
+	return  1.0 / pow(1.0 + abs(x), 2);
 }
 
-__device__ inline float SigmoidDerivativeCuda(float& x)
+inline float SoftPlusCuda(float& x)
+{
+	return log(1.0 + exp(x));
+}
+inline float SoftPlusDerivativeCuda(float& x)
+{
+	return  1.0 / (1.0 + exp(-x));
+}
+inline float SoftMaxCuda(float& x, float* layerInputs, int* indexVector, int& indexVectorSize)
+{
+	float sum = 0.0;
+	for (int i = 0; i < indexVectorSize; i++)
+	{
+		sum += exp(layerInputs[indexVector[i]]);
+	}
+	return exp(x) / sum;
+}
+
+inline float SoftMaxDerivativeCuda(float& x, float* inputs, int* indexVector, int& indexVectorSize)
+{
+	float y = SoftMaxCuda(x, inputs, indexVector, indexVectorSize);
+	return y * (1.0 - y);
+}
+
+inline float SigmoidCuda(float& x)
+{
+	return  1.0 / (1.0 + exp(-x));
+}
+
+inline float SigmoidDerivativeCuda(float& x)
 {
 	float sigm = SigmoidCuda(x);
-	return sigm * (1.0f - sigm);
+	return sigm * (1.0 - sigm);
 }
 
-__device__ inline float ReLUCuda(float& x)
+inline float ReLUCuda(float& x)
 {
-	return x <= 0.0f ? 0.0f : x;
+	return x <= 0.0 ? 0.0 : x;
 }
 
-__device__ inline float ReLUDerivativeCuda(float& x)
+inline float ReLUDerivativeCuda(float& x)
 {
-	return x == 0.0f ? 0.0f : 1.0f;
+	return x == 0.0 ? 0.0 : 1.0;
 }
 
-__device__ inline float TanhCuda(float& x)
+inline float TanhCuda(float& x)
 {
 	return tanh(x);
 }
 
-__device__ inline float TanhDerivativeCuda(float& x)
+inline float TanhDerivativeCuda(float& x)
 {
 	return 1.0 - tanh(x) * tanh(x);
 }
 
-__device__ inline float MReLUCuda(float& x)
+inline float MReLUCuda(float& x)
 {
-	return x < 0.0f ? 0.0005f * x : x;
+	return x < 0.0 ? 0.0005 * x : x;
 }
 
-__device__ inline float MReLUDerivativeCuda(float& x)
+inline float MReLUDerivativeCuda(float& x)
 {
-	return x < 0.0f ? 0.0005f : 1.0f;
+	return x < 0.0 ? 0.0005 : 1.0;
 }
 
-__device__ inline float GeLUCuda(float& x)
+inline float GeLUCuda(float& x)
 {
-	return 0.5f * x * (1.0f + erf(x / 1.414213562f));
+	return 0.5 * x * (1.0 + erf(x / 1.414213562373095048));
 }
 
-__device__ inline float GeLUDerivativeCuda(float& x)
+inline float GeLUDerivativeCuda(float& x)
 {
-	return 0.5f + 0.5f * erf(x / 1.414213562f) + x / (exp(-(x * x) / 2.0f) * pow(6.283185307f, 0.5f));
+	return 0.5 + 0.5 * erf(x / 1.414213562373095048) + x / (exp(-(x * x) / 2.0) * pow(6.283185307179586476, 0.5));
 }
 
 
-__device__  int GetMaxIndexCuda(float* outPut, int outpSize)
+int GetMaxIndexCuda(float* outPut, int outpSize)
 {
 	int index = 0;
 	float val = outPut[0];
@@ -181,7 +182,7 @@ __device__  int GetMaxIndexCuda(float* outPut, int outpSize)
 //
 
 
-__device__ float exp1024Cuda(float x)
+float exp1024Cuda(float x)
 {
 	x = 1.0 + x / 256.0;
 	x *= x; x *= x; x *= x; x *= x;
@@ -190,35 +191,35 @@ __device__ float exp1024Cuda(float x)
 }
 
 
-__device__ void GeLUCuda(float* inputs, float* outputs, size_t* indexVector, size_t& start, size_t& end)
+void GeLUCuda(float* inputs, float* outputs, int* indexVector, int& start, int& end)
 {
 	for (int i = start; i < end; i++)
 	{
 		outputs[indexVector[i]] = GeLUCuda(inputs[indexVector[i]]);
 	}
 }
-__device__ void SigmoidCuda(float* inputs, float* outputs, size_t* indexVector, size_t& start, size_t& end)
+void SigmoidCuda(float* inputs, float* outputs, int* indexVector, int& start, int& end)
 {
 	for (int i = start; i < end; i++)
 	{
 		outputs[indexVector[i]] = SigmoidCuda(inputs[indexVector[i]]);
 	}
 }
-__device__ void TanhCuda(float* inputs, float* outputs, size_t* indexVector, size_t& start, size_t& end)
+void TanhCuda(float* inputs, float* outputs, int* indexVector, int& start, int& end)
 {
 	for (int i = start; i < end; i++)
 	{
 		outputs[indexVector[i]] = tanh(inputs[indexVector[i]]);
 	}
 }
-__device__ void MReLUCuda(float* inputs, float* outputs, size_t* indexVector, size_t& start, size_t& end)
+void MReLUCuda(float* inputs, float* outputs, int* indexVector, int& start, int& end)
 {
 	for (int i = start; i < end; i++)
 	{
 		outputs[indexVector[i]] = MReLUCuda(inputs[indexVector[i]]);
 	}
 }
-__device__ void ReLUCuda(float* inputs, float* outputs, size_t* indexVector, size_t& start, size_t& end)
+void ReLUCuda(float* inputs, float* outputs, int* indexVector, int& start, int& end)
 {
 	for (int i = start; i < end; i++)
 	{
@@ -231,14 +232,14 @@ __device__ void ReLUCuda(float* inputs, float* outputs, size_t* indexVector, siz
 //	for (int i = 0; i < indexVectorSize; i++);
 //	// outputs[indexVectorSize[i]] = SoftMax(inputs[indexVectorSize[i]], inputsSoftMax, dropoutNeurons);
 //}
-__device__ void SoftPlusCuda(float* inputs, float* outputs, size_t* indexVector, size_t& start, size_t& end)
+void SoftPlusCuda(float* inputs, float* outputs, int* indexVector, int& start, int& end)
 {
 	for (int i = start; i < end; i++)
 	{
 		outputs[indexVector[i]] = SoftPlusCuda(inputs[indexVector[i]]);
 	}
 }
-__device__ void SoftSignCuda(float* inputs, float* outputs, size_t* indexVector, size_t& start, size_t& end)
+void SoftSignCuda(float* inputs, float* outputs, int* indexVector, int& start, int& end)
 {
 	for (int i = start; i < end; i++)
 	{
@@ -246,7 +247,7 @@ __device__ void SoftSignCuda(float* inputs, float* outputs, size_t* indexVector,
 	}
 }
 
-__device__ void AssignCuda(float* inputs, float* outputs, size_t* indexVector, size_t& start, size_t& end)
+void AssignCuda(float* inputs, float* outputs, int* indexVector, int& start, int& end)
 {
 	for (int i = start; i < end; i++)
 	{
@@ -254,7 +255,7 @@ __device__ void AssignCuda(float* inputs, float* outputs, size_t* indexVector, s
 	}
 }
 
-__device__ float DifferentiateWithCuda(float& x, int& function, float* inputs, int* dropouts)
+float DifferentiateWithCuda(float& x, int& function, float* inputs, int* dropouts)
 {
 	switch (function)
 	{
@@ -290,7 +291,6 @@ __device__ float DifferentiateWithCuda(float& x, int& function, float* inputs, i
 	}
 	default:
 	{
-		return 0.0f;
 		break;
 	}
 	}

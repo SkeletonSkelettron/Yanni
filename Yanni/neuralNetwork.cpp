@@ -1,25 +1,25 @@
-﻿#include "neuralNetwork.h"
+﻿#include "NeuralNetwork.h"
 #include "statisticFunctions.h"
 #include <math.h>
 #include <algorithm>
 
-size_t pLS_ = 0;
-size_t biasShift_ = 0;
-size_t curLayerSize = 0;
+int pLS_ = 0;
+int biasShift_ = 0;
+int curLayerSize = 0;
 void NeuralNetwork::NeuralNetworkInit()
 {
 	iterations = 0;
-	beta1Pow = 0.9f;
-	beta2Pow = 0.999f;
-	betaAELR = 0.001f;
-	ro = -0.9f;
-	for (size_t i = 0; i < ThreadCount; i++)
+	beta1Pow = 0.9;
+	beta2Pow = 0.999;
+	betaAELR = 0.001;
+	ro = -0.9;
+	for (int i = 0; i < ThreadCount; i++)
 	{
 		workers.push_back(new WorkerThread());
 	}
 	GradientsTemp = new float** [ThreadCount];
 	lossesTmp = new float[ThreadCount > Layers[LayersSize - 1].Size ? Layers[LayersSize - 1].Size : ThreadCount];
-	lambda = 0.7f;
+	lambda = 0.7;
 }
 
 void NeuralNetwork::ShuffleDropoutsPlain()
@@ -29,7 +29,7 @@ void NeuralNetwork::ShuffleDropoutsPlain()
 		int biasShift = Layers[k].UsingBias ? 1 : 0;
 		if (Layers[k].DropOutSize > 0 && Layers[k].LayerType == NeuralEnums::LayerType::HiddenLayer)
 		{
-			srand((unsigned int)time(NULL));
+			srand(time(NULL));
 			int rnum = 0;
 			bool tmp;
 			for (int i = 0; i < Layers[k].Size; i++)
@@ -56,13 +56,13 @@ void NeuralNetwork::ShuffleDropoutsPlain()
 
 void NeuralNetwork::InitializeWeights()
 {
-	srand((unsigned int)time(NULL));
+	srand(time(NULL));
 	Layers[0].WeightsSize = 1;
 	Layers[0].Weights = new float[1]{ 0 };
 	for (int i = 1; i < LayersSize; i++)
 	{
-		size_t size = Layers[i - 1].Size * (Layers[i].Size - (Layers[i].UsingBias ? 1.0f : 0.0f));
-		size_t StartIndex = Layers[i].UsingBias ? 0 : 1;
+		int size = Layers[i - 1].Size * (Layers[i].Size - (Layers[i].UsingBias ? 1 : 0));
+		int StartIndex = Layers[i].UsingBias ? 0 : 1;
 		Layers[i].Weights = new float[size] {0};
 		Layers[i].TempWeights = new float[size] {0};
 		if (BatchSize > 1)
@@ -114,7 +114,7 @@ void NeuralNetwork::InitializeWeights()
 
 		std::ifstream inData;
 		inData.open("weights" + std::to_string(i) + ".txt");
-		for (size_t count = 0; count < Layers[i - 1].Size * (Layers[i].Size - (Layers[i].UsingBias ? 1 : 0)); count++) {
+		for (int count = 0; count < Layers[i - 1].Size * (Layers[i].Size - (Layers[i].UsingBias ? 1 : 0)); count++) {
 			inData >> std::setprecision(100) >> Layers[i].Weights[count];
 		}
 	}
@@ -124,7 +124,7 @@ float NeuralNetwork::PropagateForwardThreaded(bool training, bool countingRohat)
 {
 	//if (training)
 		//ShuffleDropoutsPlain();
-	for (size_t k = 1; k < LayersSize - (countingRohat ? 1 : 0); k++)
+	for (int k = 1; k < LayersSize - (countingRohat ? 1 : 0); k++)
 	{
 		Layers[k].CalculateInputsThreaded(Layers[k - 1].Outputs, Layers[k - 1].Size, Layers[k - 1].OutputsBatch, Layers[k - 1].IndexVectorForNextLayer, Layers[k - 1].IndexVectorForNextLayerSize, training, ThreadCount, workers);
 		Layers[k].CalculateOutputsThreaded(ThreadCount, training, countingRohat, workers);
@@ -142,16 +142,16 @@ void NeuralNetwork::PropagateBackThreaded()
 	if (LearningRateType == NeuralEnums::LearningRateType::Adam)
 	{
 		iterations++;
-		beta1Pow = (float)pow(0.9f, iterations);
-		beta2Pow = (float)pow(0.999f, iterations);
+		beta1Pow = pow(0.9, iterations);
+		beta2Pow = pow(0.999, iterations);
 	}
 	//TODO ეს აქ არ უნდა იყოს
 	if (BatchSize > 1)
 	{
-		size_t chunkSize = BatchSize / ThreadCount;
-		size_t idx = 0;
+		int chunkSize = BatchSize / ThreadCount;
+		int idx = 0;
 
-		for (size_t i = 0; i < ThreadCount; i++)
+		for (int i = 0; i < ThreadCount; i++)
 		{
 			idx = chunkSize * i;
 
@@ -163,37 +163,38 @@ void NeuralNetwork::PropagateBackThreaded()
 	}
 	else
 	{
-		for (size_t i = LayersSize - 1; i >= 1; i--)
+		for (unsigned int i = LayersSize - 1; i >= 1; i--)
 		{
 			pLS_ = Layers[i - 1].Size;
 			biasShift_ = Layers[i].UsingBias ? 1 : 0;
 			curLayerSize = Layers[i].Size;
 
-			size_t Size = Layers[i].IndexVectorSize;
-			size_t chunkSize = Size / ThreadCount == 0 ? 1 : Size / ThreadCount;
-			size_t threadsNum = ThreadCount > Size ? Size : ThreadCount;
+			int Size = Layers[i].IndexVectorSize;
+			int chunkSize = Size / ThreadCount == 0 ? 1 : Size / ThreadCount;
+			int threadsNum = ThreadCount > Size ? Size : ThreadCount;
 
-			for (size_t threadId = 0; threadId < threadsNum; threadId++)
+			for (int threadId = 0; threadId < threadsNum; threadId++)
 			{
-				size_t start = threadId * chunkSize;
-				size_t end = (threadId + 1) == threadsNum ? Size : (threadId + 1) * chunkSize;
+				int start = threadId * chunkSize;
+				int end = (threadId + 1) == threadsNum ? Size : (threadId + 1) * chunkSize;
 				// PropagateBackDelegate ზე გადართვისას int Size = Layers[i].IndexVectorSize; უნდა მივუთითო
 				workers[threadId]->doAsync(std::bind(&NeuralNetwork::PropagateBackDelegate, this, i, start, end));
 			}
 
-			for (size_t k = 0; k < threadsNum; k++)
+			for (int k = 0; k < threadsNum; k++)
 				workers[k]->wait();
 		}
 	}
 }
 
 //66 წამი
-void NeuralNetwork::PropagateBackDelegate(int i, size_t start, size_t end)
+void NeuralNetwork::PropagateBackDelegate(int i, int start, int end)
 {
-	size_t numberIndex = 0;
-	size_t nls = Layers[i + 1].Size;
-	size_t j = 0, p = 0, l = 0;
-	for (size_t jj = start; jj < end; jj++)
+	int numberIndex = 0;
+	float gradient;
+	int nls = Layers[i + 1].Size;
+	int j = 0, p = 0, l = 0;
+	for (int jj = start; jj < end; jj++)
 	{
 		j = Layers[i].IndexVector[jj];
 		// Output ლეიერი
@@ -201,10 +202,10 @@ void NeuralNetwork::PropagateBackDelegate(int i, size_t start, size_t end)
 			Layers[i].Outputs[j] = DifferentiateLossWith(Layers[i].Outputs[j], Layers[i].Target[j], LossFunctionType, Layers[i].Size);
 		else
 		{
-			size_t nextLayerBiasShift = Layers[i + 1].UsingBias ? 1 : 0;
+			int nextLayerBiasShift = Layers[i + 1].UsingBias ? 1 : 0;
 			Layers[i].Outputs[j] = 0;
 
-			for (size_t ll = Layers[i + 1].IndexVectorSize; ll--;)
+			for (int ll = Layers[i + 1].IndexVectorSize; ll--;)
 			{
 				l = Layers[i + 1].IndexVector[ll];
 				Layers[i].Outputs[j] += Layers[i + 1].Inputs[l] * Layers[i + 1].TempWeights[(l - nextLayerBiasShift) * curLayerSize + j];
@@ -212,7 +213,7 @@ void NeuralNetwork::PropagateBackDelegate(int i, size_t start, size_t end)
 		}
 		Layers[i].Inputs[j] = Layers[i].Outputs[j] * DifferentiateWith(Layers[i].Inputs[j], Layers[i].ActivationFunction, Layers[i].Inputs, Layers[i].DropoutNeurons);
 
-		for (size_t pp = Layers[i - 1].IndexVectorForNextLayerSize; pp--;)
+		for (int pp = Layers[i - 1].IndexVectorForNextLayerSize; pp--;)
 		{
 			p = Layers[i - 1].IndexVectorForNextLayer[pp];
 			numberIndex = pLS_ * (j - biasShift_) + p;
@@ -226,14 +227,15 @@ void NeuralNetwork::PropagateBackDelegate(int i, size_t start, size_t end)
 
 
 
-void NeuralNetwork::PropagateBackDelegateNew(int i, size_t start, size_t end)
+void NeuralNetwork::PropagateBackDelegateNew(int i, int start, int end)
 {
-	size_t numberIndex = 0;
-	size_t pLS = Layers[i - 1].Size;
+	int numberIndex = 0;
+	int pLS = Layers[i - 1].Size;
 	int biasShift = Layers[i].UsingBias ? 1 : 0;
 	float gradient;
 	int j = 0, p = 0, n = 0;
-	for (size_t jj = start; jj < end; jj++)
+	float gradientTemp;
+	for (int jj = start; jj < end; jj++)
 	{
 		j = Layers[i].IndexVector[jj];
 		// Output ლეიერი
@@ -259,10 +261,10 @@ void NeuralNetwork::PropagateBackDelegateNew(int i, size_t start, size_t end)
 			Layers[i].Inputs[j] = DifferentiateWith(Layers[i].Inputs[j], Layers[i].ActivationFunction, Layers[i].Inputs, Layers[i].DropoutNeurons);
 
 			float sum = 0;
-			size_t nextLayerBiasShift = Layers[i + 1].UsingBias ? 1 : 0;
+			int nextLayerBiasShift = Layers[i + 1].UsingBias ? 1 : 0;
 
 			//შემდეგი ლეიერიდან უნდა აიღოს შესაბამისი ჯამები
-			for (size_t n = Layers[i + 1].UsingBias ? 1 : 0; n < Layers[i + 1].Size; n++)
+			for (long int n = Layers[i + 1].UsingBias ? 1 : 0; n < Layers[i + 1].Size; n++)
 			{
 				sum += Layers[i + 1].MultipliedSums[(n - nextLayerBiasShift) * Layers[i].Size + j];
 			}
@@ -370,18 +372,19 @@ void NeuralNetwork::PropagateBackDelegateNew(int i, size_t start, size_t end)
 //	}
 //}
 
-void NeuralNetwork::PropagateBackDelegateBatch(size_t start, size_t end, int threadNum)
+void NeuralNetwork::PropagateBackDelegateBatch(int start, int end, int threadNum)
 {
-	size_t numberIndex = 0;
+	int numberIndex = 0;
 	float* outputsTemp;
-	size_t pLS = 0;
-	size_t biasShift = 0;
+	float* inputs;
+	int pLS = 0;
+	int biasShift = 0;
 	float gradient;
 	float gradientTemp;
 
-	for (size_t batch = start; batch < end; batch++)
+	for (int batch = start; batch < end; batch++)
 	{
-		for (size_t i = LayersSize - 1; i >= 1; i--)
+		for (int i = LayersSize - 1; i >= 1; i--)
 		{
 
 			pLS = Layers[i - 1].Size;
@@ -427,7 +430,7 @@ void NeuralNetwork::PropagateBackDelegateBatch(size_t start, size_t end, int thr
 
 void  NeuralNetwork::CalculateWeightsBatch()
 {
-	for (size_t i = LayersSize - 1; i >= 1; i--)
+	for (unsigned int i = LayersSize - 1; i >= 1; i--)
 	{
 
 		int Size = Layers[i].IndexVectorSize;
@@ -437,8 +440,8 @@ void  NeuralNetwork::CalculateWeightsBatch()
 		for (int l = 0; l < iterator; l++)
 		{
 
-			size_t start = l * chunkSize;
-			size_t end = (l + 1) == iterator ? Size : (l + 1) * chunkSize;
+			int start = l * chunkSize;
+			int end = (l + 1) == iterator ? Size : (l + 1) * chunkSize;
 			start = (start == 0 && Layers[i].UsingBias ? 1 : start);
 			workers[l]->doAsync(std::bind(&NeuralNetwork::CalculateWeightsBatchSub, this, i, Layers[i - 1].IndexVectorForNextLayer, Layers[i - 1].IndexVectorForNextLayerSize,
 				start, end, Layers[i - 1].UsingBias));
@@ -447,20 +450,20 @@ void  NeuralNetwork::CalculateWeightsBatch()
 			workers[k]->wait();
 	}
 }
-void  NeuralNetwork::CalculateWeightsBatchSub(int i, size_t* prevLayerIndex, size_t prevLayerIndexSize, size_t start, size_t end, bool prevLayerUsingBias)
+void  NeuralNetwork::CalculateWeightsBatchSub(int i, int* prevLayerIndex, int prevLayerIndexSize, int start, int end, bool prevLayerUsingBias)
 {
 	float gradient = 0;
-	size_t numberIndex = 0;
-	size_t pLS = Layers[i - 1].Size;
-	size_t biasShift = Layers[i].UsingBias ? 1 : 0;
-	size_t p;
-	for (size_t j = start; j < end; j++)
+	int numberIndex = 0;
+	int pLS = Layers[i - 1].Size;
+	int biasShift = Layers[i].UsingBias ? 1 : 0;
+	int p;
+	for (int j = start; j < end; j++)
 	{
-		for (size_t pp = 0; pp < prevLayerIndexSize; pp++)
+		for (int pp = 0; pp < prevLayerIndexSize; pp++)
 		{
 			p = prevLayerIndex[pp];
 			numberIndex = pLS * (j - biasShift) + p;
-			for (size_t t = 0; t < ThreadCount; t++)
+			for (int t = 0; t < ThreadCount; t++)
 			{
 				gradient += Layers[i].GradientsBatch[t][numberIndex];
 				Layers[i].GradientsBatch[t][numberIndex] = 0;
@@ -475,14 +478,14 @@ void  NeuralNetwork::CalculateWeightsBatchSub(int i, size_t* prevLayerIndex, siz
 
 void  NeuralNetwork::PrepareForTesting()
 {
-	for (size_t k = 0; k < LayersSize; k++)
+	for (int k = 0; k < LayersSize; k++)
 	{
-		size_t biasShift = Layers[k].UsingBias ? 1 : 0;
+		int biasShift = Layers[k].UsingBias ? 1 : 0;
 		Layers[k].IndexVectorSize = Layers[k].Size - biasShift;
-		Layers[k].IndexVector = new size_t[(int)Layers[k].IndexVectorSize];
-		Layers[k].IndexVectorForNextLayer = new size_t[Layers[k].Size];
+		Layers[k].IndexVector = new int[Layers[k].IndexVectorSize];
+		Layers[k].IndexVectorForNextLayer = new int[Layers[k].Size];
 		Layers[k].IndexVectorForNextLayerSize = Layers[k].Size;
-		Layers[k].IndexVectorForNextLayer[0] = (size_t)0;
+		Layers[k].IndexVectorForNextLayer[0] = 0;
 		for (int i = biasShift; i < Layers[k].Size; i++)
 		{
 			Layers[k].IndexVector[i - biasShift] = i;
@@ -524,10 +527,10 @@ float NeuralNetwork::CalculateLoss(bool& training)
 	if (BatchSize == 0 || training)
 	{
 		int chunkSize = Layers[LayersSize - 1].Size / ThreadCount == 0 ? 1 : Layers[LayersSize - 1].Size / ThreadCount;
-		size_t hidenchunkSize = 0;
+		int hidenchunkSize = 0;
 		if (Type == NeuralEnums::NetworkType::AutoEncoder && AutoEncoderType == NeuralEnums::AutoEncoderType::Sparce)
 		{
-			size_t hidenchunkSize = Layers[LayersSize - 2].Size / ThreadCount == 0 ? 1 : Layers[LayersSize - 2].Size / ThreadCount;
+			int hidenchunkSize = Layers[LayersSize - 2].Size / ThreadCount == 0 ? 1 : Layers[LayersSize - 2].Size / ThreadCount;
 		}
 		int iterator = ThreadCount > Layers[LayersSize - 1].Size ? Layers[LayersSize - 1].Size : ThreadCount;
 
@@ -566,7 +569,7 @@ float NeuralNetwork::CalculateLoss(bool& training)
 	}
 }
 
-void NeuralNetwork::CalculateLossBatchSub(size_t start, size_t end, float& loss)
+void NeuralNetwork::CalculateLossBatchSub(int start, int end, float& loss)
 {
 	float result = 0.0;
 	for (size_t i = start; i < end; i++)
@@ -576,7 +579,7 @@ void NeuralNetwork::CalculateLossBatchSub(size_t start, size_t end, float& loss)
 	loss = result;
 }
 
-void NeuralNetwork::CalculateLossSub(size_t start, size_t end, size_t klbstart, size_t  klbend, float& loss)
+void NeuralNetwork::CalculateLossSub(int start, int end, int klbstart, int  klbend, float& loss)
 {
 	float result = 0.0;
 	float klbResult = 0.0;
@@ -594,7 +597,7 @@ void NeuralNetwork::CalculateLossSub(size_t start, size_t end, size_t klbstart, 
 
 
 
-float NeuralNetwork::GetLearningRateMultipliedByGrad(float& gradient, int& iterator, size_t& j)
+float NeuralNetwork::GetLearningRateMultipliedByGrad(float& gradient, int& iterator, int& j)
 {
 	switch (LearningRateType)
 	{
@@ -643,7 +646,7 @@ float NeuralNetwork::GetLearningRateMultipliedByGrad(float& gradient, int& itera
 }
 
 
-float NeuralNetwork::Adam(float& gradient, size_t& j, int& iterator)
+float NeuralNetwork::Adam(float& gradient, int& j, int& iterator)
 {
 	float result, param;
 
@@ -656,14 +659,14 @@ float NeuralNetwork::Adam(float& gradient, size_t& j, int& iterator)
 	return (LearningRate * Layers[iterator].Parameters[j]) / ((1 - beta1Pow) * (sqrt(Layers[iterator].GradientsLR[j] / (1 - beta2Pow)) + epsilon));
 }
 
-float NeuralNetwork::AdaGrad(float* gradients, float& gradient, size_t& j)
+float NeuralNetwork::AdaGrad(float* gradients, float& gradient, int& j)
 {
 	gradients[j] += gradient * gradient;
 	return 0.01 / sqrt(gradients[j] + epsilon);
 }
 
 
-float NeuralNetwork::AdaDelta(float* gradients, float* parameters, float& Gradient, size_t& j)
+float NeuralNetwork::AdaDelta(float* gradients, float* parameters, float& Gradient, int& j)
 {
 	float result, param;
 	gradients[j] = momentum * gradients[j] + (1 - momentum) * Gradient * Gradient;
@@ -673,7 +676,7 @@ float NeuralNetwork::AdaDelta(float* gradients, float* parameters, float& Gradie
 	return result;
 }
 
-float NeuralNetwork::AdamMod(float& Gradient, size_t& j, int& iterator)
+float NeuralNetwork::AdamMod(float& Gradient, int& j, int& iterator)
 {
 	float result, param;
 	float prelim = (1 - momentum) * Gradient;
@@ -685,7 +688,7 @@ float NeuralNetwork::AdamMod(float& Gradient, size_t& j, int& iterator)
 }
 
 
-float NeuralNetwork::AdaMax(float& gradient, size_t& j, int& iterator)
+float NeuralNetwork::AdaMax(float& gradient, int& j, int& iterator)
 {
 	float result, param;
 
@@ -698,7 +701,7 @@ float NeuralNetwork::AdaMax(float& gradient, size_t& j, int& iterator)
 	return (LearningRate * Layers[iterator].Parameters[j]) / ((1 - beta1Pow) * Layers[iterator].GradientsLR[j]);
 }
 
-float NeuralNetwork::RMSProp(float* gradients, float& gradient, size_t& j)
+float NeuralNetwork::RMSProp(float* gradients, float& gradient, int& j)
 {
 	gradients[j] = momentum * gradients[j] + (1 - momentum) * gradient * gradient;
 	return startingLearningRate / sqrt(gradients[j] + epsilon);

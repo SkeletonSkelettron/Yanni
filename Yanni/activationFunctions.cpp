@@ -1,4 +1,4 @@
-﻿#include "activationFunctions.h"
+﻿#include "ActivationFunctions.h"
 #include <vector>
 #include <math.h>
 #include <cmath>
@@ -6,8 +6,8 @@
 #include "statisticfunctions.h" 
 #include <stdexcept>
 
-const float PI2 = 6.283185307179586476f;
-const float SQ2 = 1.414213562373095048f;
+const long double PI2 = 6.283185307179586476L;
+const long double SQ2 = 1.414213562373095048L;
 
 //void BalanceWith(std::vector <float>& dataset, NeuralEnums::BalanceType BalancingMethod)
 //{
@@ -35,9 +35,9 @@ const float SQ2 = 1.414213562373095048f;
 void ActivateWith(
 	float* inputs,
 	float* outputs,
-	size_t* indexVector,
-	size_t& start,
-	size_t& end,
+	int* indexVector,
+	int& start,
+	int& end,
 	NeuralEnums::ActivationFunction& function)
 {
 	switch (function)
@@ -82,55 +82,55 @@ void ActivateWith(
 	}
 }
 
-inline void GeLU_v(float* inputs, float* outputs, size_t* indexVector, size_t& start, size_t& end)
+inline void GeLU_v(float* inputs, float* outputs, int* indexVector, int& start, int& end)
 {
 	for (int i = start; i < end; i++)
 	{
 		outputs[indexVector[i]] = GeLU(inputs[indexVector[i]]);
 	}
 }
-inline void Sigmoid_v(float* inputs, float* outputs, size_t* indexVector, size_t& start, size_t& end)
+inline void Sigmoid_v(float* inputs, float* outputs, int* indexVector, int& start, int& end)
 {
 	for (int i = start; i < end; i++)
 	{
 		outputs[indexVector[i]] = Sigmoid(inputs[indexVector[i]]);
 	}
 }
-inline void Tanh_v(float* inputs, float* outputs, size_t* indexVector, size_t& start, size_t& end)
+inline void Tanh_v(float* inputs, float* outputs, int* indexVector, int& start, int& end)
 {
 	for (int i = start; i < end; i++)
 	{
 		outputs[indexVector[i]] = tanh(inputs[indexVector[i]]);
 	}
 }
-inline void MReLU_v(float* inputs, float* outputs, size_t* indexVector, size_t& start, size_t& end)
+inline void MReLU_v(float* inputs, float* outputs, int* indexVector, int& start, int& end)
 {
 	for (int i = start; i < end; i++)
 	{
 		outputs[indexVector[i]] = MReLU(inputs[indexVector[i]]);
 	}
 }
-inline void ReLU_v(float* inputs, float* outputs, size_t* indexVector, size_t& start, size_t& end)
+inline void ReLU_v(float* inputs, float* outputs, int* indexVector, int& start, int& end)
 {
 	for (int i = start; i < end; i++)
 	{
 		outputs[indexVector[i]] = ReLU(inputs[indexVector[i]]);
 	}
 }
-inline void SoftMax_v(float* inputs, float* inputsSoftMax, float* outputs, size_t* indexVector, size_t& start, size_t& end)
+inline void SoftMax_v(float* inputs, float* inputsSoftMax, float* outputs, int* indexVector, int& start, int& end)
 {
 	//TODO მაინც კაი სანახავია როგორ მუშაობს
 	//for (int i = 0; i < indexVectorSize; i++);
 	// outputs[indexVectorSize[i]] = SoftMax(inputs[indexVectorSize[i]], inputsSoftMax, dropoutNeurons);
 }
-inline void SoftPlus_v(float* inputs, float* outputs, size_t* indexVector, size_t& start, size_t& end)
+inline void SoftPlus_v(float* inputs, float* outputs, int* indexVector, int& start, int& end)
 {
 	for (int i = start; i < end; i++)
 	{
 		outputs[indexVector[i]] = SoftPlus(inputs[indexVector[i]]);
 	}
 }
-inline void SoftSign_v(float* inputs, float* outputs, size_t* indexVector, size_t& start, size_t& end)
+inline void SoftSign_v(float* inputs, float* outputs, int* indexVector, int& start, int& end)
 {
 	for (int i = start; i < end; i++)
 	{
@@ -138,7 +138,7 @@ inline void SoftSign_v(float* inputs, float* outputs, size_t* indexVector, size_
 	}
 }
 
-inline void Assign_v(float* inputs, float* outputs, size_t* indexVector, size_t& start, size_t& end)
+inline void Assign_v(float* inputs, float* outputs, int* indexVector, int& start, int& end)
 {
 	for (int i = start; i < end; i++)
 	{
@@ -152,20 +152,20 @@ inline float SoftSign(float& x)
 }
 inline float SoftSignDerivative(float& x)
 {
-	return  1.0f / pow(1.0f + abs(x), 2);
+	return  1.0 / pow(1.0 + abs(x), 2);
 }
 
 float SoftPlus(float& x)
 {
-	return log(1.0f + exp(x));
+	return log(1.0 + exp(x));
 }
 inline float SoftPlusDerivative(float& x)
 {
-	return  1.0f / (1.0f + exp(-x));
+	return  1.0 / (1.0 + exp(-x));
 }
-inline float SoftMax(float& x, float* layerInputs, size_t* indexVector, size_t& indexVectorSize)
+inline float SoftMax(float& x, float* layerInputs, int* indexVector, int& indexVectorSize)
 {
-	float sum = 0.0f;
+	float sum = 0.0;
 	for (int i = 0; i < indexVectorSize; i++)
 	{
 		sum += exp(layerInputs[indexVector[i]]);
@@ -173,31 +173,31 @@ inline float SoftMax(float& x, float* layerInputs, size_t* indexVector, size_t& 
 	return exp(x) / sum;
 }
 
-inline float SoftMaxDerivative(float& x, float* inputs, size_t* indexVector, size_t& indexVectorSize)
+inline float SoftMaxDerivative(float& x, float* inputs, int* indexVector, int& indexVectorSize)
 {
 	float y = SoftMax(x, inputs, indexVector, indexVectorSize);
-	return y * (1.0f - y);
+	return y * (1.0 - y);
 }
 
 inline float Sigmoid(float& x)
 {
-	return  1.0f / (1.0f + exp(-x));
+	return  1.0 / (1.0 + exp(-x));
 }
 
 inline float SigmoidDerivative(float& x)
 {
 	float sigm = Sigmoid(x);
-	return sigm * (1.0f - sigm);
+	return sigm * (1.0 - sigm);
 }
 
 inline float ReLU(float& x)
 {
-	return x <= 0.0f ? 0.0f : x;
+	return x <= 0.0 ? 0.0 : x;
 }
 
 inline float ReLUDerivative(float& x)
 {
-	return x == 0.0f ? 0.0f : 1.0f;
+	return x == 0.0 ? 0.0 : 1.0;
 }
 
 inline float Tanh(float& x)
@@ -207,35 +207,35 @@ inline float Tanh(float& x)
 
 inline float TanhDerivative(float& x)
 {
-	return 1.0f - tanh(x) * tanh(x);
+	return 1.0 - tanh(x) * tanh(x);
 }
 
 inline float MReLU(float& x)
 {
-	return x < 0.0f ? 0.0005f * x : x;
+	return x < 0.0 ? 0.0005 * x : x;
 }
 
 inline float MReLUDerivative(float& x)
 {
-	return x < 0.0f ? 0.0005f : 1.0;
+	return x < 0.0 ? 0.0005 : 1.0;
 }
 
 inline float GeLU(float& x)
 {
-	return 0.5f * x * (1.0f + erf(x / SQ2));
+	return 0.5 * x * (1.0 + erf(x / SQ2));
 }
 
 inline float GeLUDerivative(float& x)
 {
-	return 0.5f + 0.5f * erf(x / SQ2) + x / (exp(-(x * x) / 2.0f) * pow(PI2, 0.5f));
+	return 0.5 + 0.5 * erf(x / SQ2) + x / (exp(-(x * x) / 2.0) * pow(PI2, 0.5));
 }
 
 
-int GetMaxIndex(float* outPut, size_t outpSize)
+int GetMaxIndex(float* outPut, int outpSize)
 {
 	int index = 0;
 	float val = outPut[0];
-	for (size_t i = 0; i < outpSize; i++)
+	for (unsigned long int i = 0; i < outpSize; i++)
 	{
 		if (outPut[i] > val)
 		{
@@ -250,7 +250,7 @@ int GetMaxIndex(float* outPut, size_t outpSize)
 
 float exp1024(float x)
 {
-	x = 1.0f + x / 256.0f;
+	x = 1.0 + x / 256.0;
 	x *= x; x *= x; x *= x; x *= x;
 	x *= x; x *= x; x *= x; x *= x;
 	return x;

@@ -18,7 +18,7 @@ namespace NeuralEnums {
 		InputLayer = 0,
 		HiddenLayer = 1,
 		OutputLayer = 2,
-		None = 3
+		None= 3
 	};
 	enum class BalanceType
 	{

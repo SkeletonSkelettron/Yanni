@@ -10,9 +10,9 @@
 #include <vector>
 # include <windows.h>
 
-size_t in(std::ifstream& icin, size_t size);
+unsigned int in(std::ifstream& icin, unsigned int size);
 
-void ReadMNISTMod(std::vector<std::vector<float>>& images, std::vector<size_t>& labels, bool train);
+void ReadMNISTMod(std::vector<std::vector<float>>& images, std::vector<int>& labels, bool train);
 
 
 #endif // READMNIST_H

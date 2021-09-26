@@ -155,12 +155,12 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
-      <FloatingPointModel>Fast</FloatingPointModel>
+      <FloatingPointModel>Precise</FloatingPointModel>
       <FloatingPointExceptions>false</FloatingPointExceptions>
       <OpenMPSupport>true</OpenMPSupport>
       <DebugInformationFormat />
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <LanguageStandard />
+      <LanguageStandard>stdcpp14</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -175,15 +175,15 @@
       <Include>./;../../common/inc</Include>
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <CodeGeneration>compute_75,sm_75</CodeGeneration>
-      <GPUDebugInfo>true</GPUDebugInfo>
-      <GenerateLineInfo>true</GenerateLineInfo>
-      <HostDebugInfo>true</HostDebugInfo>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <Optimization>Od</Optimization>
-      <Runtime>MTd</Runtime>
-      <RuntimeChecks>Default</RuntimeChecks>
-      <TypeInfo>true</TypeInfo>
-      <Warning>W1</Warning>
+      <GPUDebugInfo>false</GPUDebugInfo>
+      <GenerateLineInfo>false</GenerateLineInfo>
+      <HostDebugInfo>false</HostDebugInfo>
+      <DebugInformationFormat>None</DebugInformationFormat>
+      <Optimization>O2</Optimization>
+      <Runtime>InheritFromHost</Runtime>
+      <RuntimeChecks>InheritFromHost</RuntimeChecks>
+      <TypeInfo>InheritFromHost</TypeInfo>
+      <Warning>InheritFromHost</Warning>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -224,7 +224,6 @@
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="activationFunctionsCuda.cu" />
-    <CudaCompile Include="cudaClass.cu" />
     <CudaCompile Include="lossFunctionsCuda.cu" />
     <CudaCompile Include="neuNetCuda.cu" />
     <CudaCompile Include="ramdom.cu" />

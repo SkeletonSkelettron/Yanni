@@ -4,18 +4,18 @@
 #include "activationFunctionsCuda.cuh"
 __device__ struct LayerCuda
 {
-	size_t Size;
+	int Size;
 	int BatchSize;
 	int ActivationFunction;
 	int LayerType;
-	size_t IndexVectorSize;
-	size_t IndexVectorForNextLayerSize;
+	int IndexVectorSize;
+	int IndexVectorForNextLayerSize;
 	float DropOutSize;
 	bool UsingBias;
 	int WeightsSize;
 	float* RoHat;
-	size_t* IndexVector;
-	size_t* IndexVectorForNextLayer;
+	int* IndexVector;
+	int* IndexVectorForNextLayer;
 	int* DropoutNeurons;
 	float* Weights;
 	float* TempWeights;
@@ -27,41 +27,41 @@ __device__ struct LayerCuda
 	float* OutputsBatch;
 	float* TargetsBatch;
 
-	__device__ inline float& GetNumberFromBatch(float* batch, size_t batchNumber, size_t count)
+	__device__ inline float& GetNumberFromBatch(float* batch, int batchNumber, int count)
 	{
 		return batch[batchNumber * Size + count];
 	}
 
-	__device__ inline float& GetInputsBatch(size_t batchNumber, size_t count)
+	__device__ inline float& GetInputsBatch(int batchNumber, int count)
 	{
 		return InputsBatch[batchNumber * Size + count];
 	}
-	__device__ inline float& GetOutputsBatch(size_t batchNumber, size_t count)
+	__device__ inline float& GetOutputsBatch(int batchNumber, int count)
 	{
 		return OutputsBatch[batchNumber * Size + count];
 	}
-	__device__ inline float& GetGradientsBatch(size_t batchNumber, size_t count)
+	__device__ inline float& GetGradientsBatch(int batchNumber, int count)
 	{
 		return GradientsBatch[batchNumber * Size + count];
 	}
-	__device__ inline float& GetTargetsBatch(size_t batchNumber, size_t count)
+	__device__ inline float& GetTargetsBatch(int batchNumber, int count)
 	{
 		return TargetsBatch[batchNumber * Size + count];
 	}
 
-	__device__ inline float* GetInputsBatch(size_t batchNumber)
+	__device__ inline float* GetInputsBatch(int batchNumber)
 	{
 		return &InputsBatch[batchNumber * Size];
 	}
-	__device__ inline float* GetOutputsBatch(size_t batchNumber)
+	__device__ inline float* GetOutputsBatch(int batchNumber)
 	{
 		return &OutputsBatch[batchNumber * Size];
 	}
-	__device__ inline float* GetGradientsBatch(size_t batchNumber)
+	__device__ inline float* GetGradientsBatch(int batchNumber)
 	{
 		return &GradientsBatch[batchNumber * Size];
 	}
-	__device__ inline float* GetTargetsBatch(size_t batchNumber)
+	__device__ inline float* GetTargetsBatch(int batchNumber)
 	{
 		return &TargetsBatch[batchNumber * Size];
 	}
@@ -71,12 +71,12 @@ __device__ struct LayerCuda
 	__device__ void CalculateInputs(
 		int prevLayerSize,
 		float* prevLayerOutputBatch,
-		size_t* prevLayerIndexes,
-		size_t& prevLayerIndexVectorSize,
+		int* prevLayerIndexes,
+		int& prevLayerIndexVectorSize,
 		bool training,
-		size_t batch,
-		size_t start,
-		size_t end)
+		int batch,
+		int start,
+		int end)
 	{
 		float result;
 		int biasShift = UsingBias ? 1 : 0;
@@ -97,7 +97,7 @@ __device__ struct LayerCuda
 	}
 
 	//---------------------------------------------------
-	__device__ void CalculateOutputs(size_t& batch, size_t start, size_t end, bool training, bool countingRohat)
+	__device__ void CalculateOutputs(int& batch, int start, int end, bool training, bool countingRohat)
 	{
 		//TODO ჩასამატებელია SoftMax რეალიზაცია 
 		ActivateWithCuda(
@@ -108,10 +108,6 @@ __device__ struct LayerCuda
 			GetOutputsBatch(batch, 0) = GetInputsBatch(batch, 0);
 	}
 
-	float getLayerSize()
-	{
-		return BatchSize * Size * sizeof(float) * 2 + WeightsSize * BatchSize * sizeof(float) + (LayerType == 2 ? BatchSize * Size * sizeof(float) * 2.0f : 0.0f);
-	}
 };
 
 #endif //LAYERCUDA_H

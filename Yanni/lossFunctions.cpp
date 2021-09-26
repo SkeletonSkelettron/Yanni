@@ -6,11 +6,11 @@
 
 
 
-float  KullbackLeiblerDivergence(float* roHat, float& ro, size_t start, size_t end)
+float  KullbackLeiblerDivergence(float* roHat, float& ro, int start, int end)
 {
 	float sum = 0.0;
 	for (size_t i = start; i < end; i++)
-		sum += ro * log(ro / roHat[i]) + (1.0f - ro) * log((1.0f - ro) / (1.0f - roHat[i]));
+		sum += ro * log(ro / roHat[i]) + (1 - ro) * log((1 - ro) / (1 - roHat[i]));
 	return sum;
 }
 
@@ -20,29 +20,29 @@ float  KullbackLeiblerDivergenceDerivative(float& output, float& target)
 	return log(output / target) + 1 / target;
 }
 
-float  BinaryCrossentropy(float* output, float* target, size_t targetSize)
+float  BinaryCrossentropy(float* output, float* target, int targetSize)
 {
-	float sum = 0.0f;
-	for (size_t i = 0; i < targetSize; i++)
+	float sum = 0;
+	for (int i = 0; i < targetSize; i++)
 	{
-		sum += target[i] * log(output[i]) - (1.0f - target[i]) * log(1.0f - output[i]);
+		sum += target[i] * log(output[i]) - (1 - target[i]) * log(1 - output[i]);
 	}
 	return -sum / targetSize;
 }
 
-float  BinaryCrossentropyDerivative(float& output, float& target, size_t size)
+float  BinaryCrossentropyDerivative(float& output, float& target, int size)
 {
-	return (-target / output + (1.0f - target) / (1.0f - output)) / size;
+	return (-target / output + (1 - target) / (1 - output)) / size;
 }
 
 float  _CEL(float& output, float& target)
 {
-	return -target * log(output) - (1.0f - target) * log(1.0f - output);
+	return -target * log(output) - (1 - target) * log(1 - output);
 }
-float CEL(float* output, float* target, size_t size)
+float CEL(float* output, float* target, int size)
 {
 	float sum = 0;
-	for (size_t i = 0; i < size; i++)
+	for (int i = 0; i < size; i++)
 	{
 		sum += _CEL(output[i], target[i]);
 	}
@@ -50,13 +50,13 @@ float CEL(float* output, float* target, size_t size)
 }
 float MSL(float& output, float& target)
 {
-	return pow((target - output), 2.0f) / 2.0f;
+	return pow((target - output), 2) / 2;
 }
 
-float MSL(float* output, float* target, size_t start, size_t end, size_t outputSize)
+float MSL(float* output, float* target, int start, int end, int outputSize)
 {
 	float Sum = 0;
-	for (size_t i = start; i < end; i++)
+	for (unsigned long int i = start; i < end; i++)
 	{
 		Sum += MSL(target[i], output[i]) / outputSize;
 	}
@@ -68,7 +68,7 @@ float CELDerevative(float& output, float& target)
 	return -target / output + (1 - target) / (1 - output);
 }
 
-float CalculateLossFunction(NeuralEnums::LossFunctionType& function, float* output, float* target, size_t start, size_t end, size_t outputSize)
+float CalculateLossFunction(NeuralEnums::LossFunctionType& function, float* output, float* target, int start, int end, int outputSize)
 {
 	switch (function)
 	{
@@ -79,7 +79,7 @@ float CalculateLossFunction(NeuralEnums::LossFunctionType& function, float* outp
 		break;
 	}
 }
-float DifferentiateLossWith(float& output, float& target, NeuralEnums::LossFunctionType& function, size_t size)
+float DifferentiateLossWith(float& output, float& target, NeuralEnums::LossFunctionType& function, int size)
 {
 	switch (function)
 	{

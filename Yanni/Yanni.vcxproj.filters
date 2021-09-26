@@ -114,9 +114,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="cudaClass.cu">
-      <Filter>Cuda</Filter>
-    </CudaCompile>
     <CudaCompile Include="activationFunctionsCuda.cu">
       <Filter>Cuda</Filter>
     </CudaCompile>

@@ -1,10 +1,11 @@
 ﻿#include "lossFunctionsCuda.cuh"
+#include "enums.h"
 #include <vector>
 #include <math.h>
 #include <cmath>
 
 
-float  KullbackLeiblerDivergenceCuda(float* roHat, float& ro, size_t start, size_t end)
+float  KullbackLeiblerDivergenceCuda(float* roHat, float& ro, int start, int end)
 {
 	float sum = 0.0;
 	for (size_t i = start; i < end; i++)
@@ -18,17 +19,17 @@ float  KullbackLeiblerDivergenceDerivativeCuda(float& output, float& target)
 	return log(output / target) + 1 / target;
 }
 
-float  BinaryCrossentropyCuda(float* output, float* target, size_t targetSize)
+float  BinaryCrossentropyCuda(float* output, float* target, int targetSize)
 {
 	float sum = 0;
-	for (size_t i = 0; i < targetSize; i++)
+	for (int i = 0; i < targetSize; i++)
 	{
 		sum += target[i] * log(output[i]) - (1 - target[i]) * log(1 - output[i]);
 	}
 	return -sum / targetSize;
 }
 
-float  BinaryCrossentropyDerivativeCuda(float& output, float& target, size_t size)
+float  BinaryCrossentropyDerivativeCuda(float& output, float& target, int size)
 {
 	return (-target / output + (1 - target) / (1 - output)) / size;
 }
@@ -37,10 +38,10 @@ float  _CELCuda(float& output, float& target)
 {
 	return -target * log(output) - (1 - target) * log(1 - output);
 }
-float CELCuda(float* output, float* target, size_t size)
+float CELCuda(float* output, float* target, int size)
 {
 	float sum = 0;
-	for (size_t i = 0; i < size; i++)
+	for (int i = 0; i < size; i++)
 	{
 		sum += _CELCuda(output[i], target[i]);
 	}
@@ -51,10 +52,10 @@ float MSLCuda(float& output, float& target)
 	return pow((target - output), 2) / 2;
 }
 
-float MSLCuda(float* output, float* target, size_t start, size_t end, size_t outputSize)
+float MSLCuda(float* output, float* target, int start, int end, int outputSize)
 {
 	float Sum = 0;
-	for (size_t i = start; i < end; i++)
+	for (unsigned long int i = start; i < end; i++)
 	{
 		Sum += MSLCuda(target[i], output[i]) / outputSize;
 	}
@@ -66,7 +67,7 @@ float CELDerevativeCuda(float& output, float& target)
 	return -target / output + (1 - target) / (1 - output);
 }
 
-float CalculateLossFunctionCuda(int& function, float* output, float* target, size_t start, size_t end, size_t outputSize)
+float CalculateLossFunctionCuda(int& function, float* output, float* target, int start, int end, int outputSize)
 {
 	switch (function)
 	{
@@ -77,7 +78,7 @@ float CalculateLossFunctionCuda(int& function, float* output, float* target, siz
 		break;
 	}
 }
-float DifferentiateLossWithCuda(float& output, float& target, int& function, size_t size)
+float DifferentiateLossWithCuda(float& output, float& target, int& function, int size)
 {
 	switch (function)
 	{

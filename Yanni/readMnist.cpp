@@ -5,30 +5,30 @@
 #include <string>
 #include <cstring>
 #include <vector>
-#include <windows.h>
+# include <windows.h>
 
-size_t in(std::ifstream& icin, size_t size)
+unsigned int in(std::ifstream& icin, unsigned int size)
 {
-	size_t ans = 0;
-	for (size_t i = 0; i < size; i++)
+	unsigned int ans = 0;
+	for (long int i = 0; i < size; i++)
 	{
 		unsigned char x;
 		icin.read((char*)&x, 1);
-		size_t temp = x;
+		unsigned int temp = x;
 		ans <<= 8;
 		ans += temp;
 	}
 	return ans;
 }
 
-void ReadMNISTMod(std::vector<std::vector<float>>& images, std::vector<size_t>& labels, bool train)
+void ReadMNISTMod(std::vector<std::vector<float>>& images, std::vector<int>& labels, bool train)
 {
 
 	char result[MAX_PATH]{};
-	auto rslt= std::string(result, GetModuleFileNameA(NULL, result, MAX_PATH));
+	auto rslt = std::string(result, GetModuleFileNameA(NULL, result, MAX_PATH));
 
 
-	size_t num, magic, rows, cols;
+	unsigned int num, magic, rows, cols;
 	std::ifstream icin;
 	//icin.open(train ? "../../NeuNet/MNIST/train-images.idx3-ubyte"
 	//	: "../../NeuNet/MNIST/t10k-images.idx3-ubyte", ios::binary);
@@ -57,9 +57,9 @@ void ReadMNISTMod(std::vector<std::vector<float>>& images, std::vector<size_t>& 
 	//	: "../../NeuNet/MNIST/t10k-labels.idx1-ubyte", ios::binary);
 	icin.open(train ? "C:/Users/Misha/source/repos/NeuNet/NeuNet/MNIST/train-labels.idx1-ubyte"
 		: "C:/Users/Misha/source/repos/NeuNet/NeuNet/MNIST/t10k-labels.idx1-ubyte", std::ios::binary);
-	size_t num2_ = num;
+	long int num2_ = num;
 	magic = in(icin, 4), num2_ = in(icin, 4);
-	for (size_t i = 0; i < num; i++)
+	for (long int i = 0; i < num; i++)
 	{
 		labels.push_back(in(icin, 1));
 	}

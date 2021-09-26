@@ -9,19 +9,19 @@
 #include <thread>
 #include <condition_variable>
 #include "enums.h"
-#include "ActivationFunctions.h"
-#include "WorkerThread.h"
-#include "Layer.h"
-#include "LearningRateFunctions.h"
-#include "GradientFunctions.h"
-#include "LossFunctions.h"
+#include "activationFunctions.h"
+#include "workerThread.h"
+#include "layer.h"
+#include "learningRateFunctions.h"
+#include "gradientFunctions.h"
+#include "lossFunctions.h"
 //https://stackoverflow.com/questions/16350473/why-do-i-need-stdcondition-variable
 
 
 class NeuralNetwork
 {
 public:
-	size_t ThreadCount;
+	int ThreadCount;
 	float LearningRate;
 	std::vector<WorkerThread*> workers;
 	NeuralEnums::NetworkType Type;
@@ -36,7 +36,7 @@ public:
 	int BatchSize;
 	bool Cuda;
 	Layer* Layers;
-	size_t LayersSize;
+	int LayersSize;
 	float*** GradientsTemp;
 	float* lossesTmp;
 	float ro;
@@ -45,37 +45,37 @@ public:
 	float beta2Pow;
 	float betaAELR;
 
-	const float momentum = 0.9f;
-	const float epsilon = 0.0000001f;
-	const float startingLearningRate = 0.001f;
-	const float beta1 = 0.9f;
-	const float beta2 = 0.999f;
+	const float momentum = 0.9;
+	const float epsilon = 0.0000001;
+	const float startingLearningRate = 0.001;
+	const float beta1 = 0.9;
+	const float beta2 = 0.999;
 
 	//weight decay parameter for sparce autoencoder
-	float lambda = 0.7f;
+	float lambda = 0.7;
 	void NeuralNetworkInit();
 	void InitializeWeights();
 	void PrepareForTesting();
 	float PropagateForwardThreaded(bool training, bool countingRohat);
 	void PropagateBackThreaded();
-	void PropagateBackDelegate(int i, size_t start, size_t end);
-	void PropagateBackDelegateNew(int i, size_t start, size_t end);
-	void PropagateBackDelegateBatch(size_t start, size_t end, int threadNum);
+	void PropagateBackDelegate(int i, int start, int end);
+	void PropagateBackDelegateNew(int i, int start, int end);
+	void PropagateBackDelegateBatch(int start, int end, int threadNum);
 	void ShuffleDropoutsPlain();
 	void CalculateWeightsBatch();
-	void CalculateWeightsBatchSub(int i, size_t* prevLayerIndex, size_t prevLayerIndexSize, size_t start, size_t end, bool prevLayerUsingbias);
+	void CalculateWeightsBatchSub(int i, int* prevLayerIndex, int prevLayerIndexSize, int start, int end, bool prevLayerUsingbias);
 	float CalculateLoss(bool& training);
-	void CalculateLossSub(size_t start, size_t end, size_t klbstart, size_t  klbend, float& loss);
-	void CalculateLossBatchSub(size_t start, size_t end, float& loss);
+	void CalculateLossSub(int start, int end, int klbstart, int  klbend, float& loss);
+	void CalculateLossBatchSub(int start, int end, float& loss);
 
 
-	float GetLearningRateMultipliedByGrad(float& gradient, int& iterator, size_t& j);
-	float Adam(float& gradient, size_t& j, int& iterator);
-	float AdaGrad(float* gradients, float& gradient, size_t& j);
-	float AdaDelta(float* gradients, float* parameters, float& Gradient, size_t& j);
-	float AdamMod(float& Gradient, size_t& j, int& iterator);
-	float AdaMax(float& gradient, size_t& j, int& iterator);
-	float RMSProp(float* gradients, float& gradient, size_t& j);
+	float GetLearningRateMultipliedByGrad(float& gradient, int& iterator, int& j);
+	float Adam(float& gradient, int& j, int& iterator);
+	float AdaGrad(float* gradients, float& gradient, int& j);
+	float AdaDelta(float* gradients, float* parameters, float& Gradient, int& j);
+	float AdamMod(float& Gradient, int& j, int& iterator);
+	float AdaMax(float& gradient, int& j, int& iterator);
+	float RMSProp(float* gradients, float& gradient, int& j);
 };
 #endif //NEURALNETWORK_H
 
@@ -97,7 +97,7 @@ template <typename T> std::vector<T> cudaCalculate(std::vector<T>& output, std::
 {
 	int cols = output.size();
 	int rows = weightsTensor.size() / output.size();
-	
+
 	std::vector<double> p;
 	p.resize(rows);
 

@@ -306,8 +306,8 @@ void initNeUnetFromJson(NeuralNetwork& neuralNetwork)
 void ReadData(std::vector<std::vector<float>>& trainingSet, std::vector<std::vector<float>>& testSet, std::vector<std::vector<float>>& labels, std::vector<std::vector<float>>& testLabels)
 {
 
-	std::vector<size_t> _labels;
-	std::vector<size_t> _testlabels;
+	std::vector<int> _labels;
+	std::vector<int> _testlabels;
 	ReadMNISTMod(trainingSet, _labels, true);
 	ReadMNISTMod(testSet, _testlabels, false);
 
@@ -416,7 +416,7 @@ void readDataAndTest()
 			try
 			{
 				size_t seed = std::chrono::system_clock::now().time_since_epoch().count();
-				//shuffle(index.begin(), index.end(), std::default_random_engine(seed));
+				shuffle(index.begin(), index.end(), std::default_random_engine(seed));
 				clock_t beginInside = clock();
 
 				if (neuralNetwork.Type == NeuralEnums::NetworkType::Normal)

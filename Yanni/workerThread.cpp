@@ -1,12 +1,12 @@
-#include "WorkerThread.h"
+#include "workerThread.h"
 
 WorkerThread::WorkerThread() :isRunning(false)
 {
 	thread.reset(new std::thread([this]
-	{
-		isRunning = true;
-		this->startThread();
-	}));
+		{
+			isRunning = true;
+			this->startThread();
+		}));
 }
 
 WorkerThread::~WorkerThread()
@@ -19,7 +19,7 @@ void WorkerThread::startThread()
 	std::unique_lock<std::mutex> lock(mutex);
 	do
 	{
-		while (isRunning &&  task == NULL)
+		while (isRunning && task == NULL)
 			itemInQueue.wait(lock);
 
 		lock.unlock();

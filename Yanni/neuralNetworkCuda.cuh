@@ -9,7 +9,7 @@
 #include "lossFunctionsCuda.cuh"
 //https://stackoverflow.com/questions/16350473/why-do-i-need-stdcondition-variable
 
-struct NeuralNetworkCuda
+__device__ struct NeuralNetworkCuda
 {
 	unsigned short ThreadCount;
 	float LearningRate;
@@ -23,7 +23,6 @@ struct NeuralNetworkCuda
 	int LossCalculation;
 	int LogLoss;
 	int BatchSize;
-	int MaxBachSize;
 	bool Cuda;
 	LayerCuda* Layers;
 	int LayersSize;
@@ -34,7 +33,7 @@ struct NeuralNetworkCuda
 	float beta1Pow;
 	float beta2Pow;
 	float betaAELR;
-
+	int MaxBachSize;
 	const float momentum = 0.9;
 	const float epsilon = 0.0000001;
 	const float startingLearningRate = 0.001;
@@ -51,15 +50,15 @@ struct NeuralNetworkCuda
 
 	__device__ void ShuffleDropoutsPlain()
 	{
-		for (size_t k = 1; k < LayersSize; k++)
+		for (int k = 1; k < LayersSize; k++)
 		{
-			size_t biasShift = Layers[k].UsingBias ? 1 : 0;
+			int biasShift = Layers[k].UsingBias ? 1 : 0;
 			if (Layers[k].DropOutSize > 0 && Layers[k].LayerType == 1) // Hidden Layer
 			{
 				srand(time(NULL));
 				int rnum = 0;
 				bool tmp;
-				for (size_t i = 0; i < Layers[k].Size; i++)
+				for (int i = 0; i < Layers[k].Size; i++)
 				{
 					rnum = rand() % Layers[k].Size;
 					tmp = Layers[k].DropoutNeurons[i];
@@ -70,7 +69,7 @@ struct NeuralNetworkCuda
 				int counter = 0;
 				if (biasShift == 1)
 					Layers[k].IndexVectorForNextLayer[0] = 0;
-				for (size_t i = biasShift; i < Layers[k].Size; i++)
+				for (int i = biasShift; i < Layers[k].Size; i++)
 					if (!Layers[k].DropoutNeurons[i])
 					{
 						Layers[k].IndexVector[counter] = i;
@@ -81,13 +80,13 @@ struct NeuralNetworkCuda
 		}
 	}
 
-	__device__ void PropagateBack(int i, size_t batch, size_t start, size_t end) // i- layer index
+	__device__ void PropagateBack(int i, int batch, int start, int end) // i- layer index
 	{
 		int numberIndex = 0;
 		float gradient;
 		int nls = Layers[i + 1].Size;
 		int j = 0, p = 0, l = 0;
-		for (size_t jj = start; jj < end; jj++)
+		for (int jj = start; jj < end; jj++)
 		{
 			j = Layers[i].IndexVector[jj];
 			// Output ლეიერი
@@ -95,10 +94,10 @@ struct NeuralNetworkCuda
 				Layers[i].GetOutputsBatch(batch, j) = DifferentiateLossWithCuda(Layers[i].GetOutputsBatch(batch, j), Layers[i].GetTargetsBatch(batch, j), LossFunctionType, Layers[i].Size);
 			else
 			{
-				size_t nextLayerBiasShift = Layers[i + 1].UsingBias ? 1 : 0;
+				int nextLayerBiasShift = Layers[i + 1].UsingBias ? 1 : 0;
 				Layers[i].GetOutputsBatch(batch, j) = 0;
 
-				for (size_t ll = Layers[i + 1].IndexVectorSize; ll--;)
+				for (int ll = Layers[i + 1].IndexVectorSize; ll--;)
 				{
 					l = Layers[i + 1].IndexVector[ll];
 					Layers[i].GetOutputsBatch(batch, j) += Layers[i + 1].GetInputsBatch(batch, l) * Layers[i + 1].TempWeights[(l - nextLayerBiasShift) * curLayerSize + j];
@@ -106,7 +105,7 @@ struct NeuralNetworkCuda
 			}
 			Layers[i].GetInputsBatch(batch, j) = Layers[i].GetOutputsBatch(batch, j) * DifferentiateWithCuda(Layers[i].GetInputsBatch(batch, j), Layers[i].ActivationFunction, Layers[i].GetInputsBatch(batch), Layers[i].DropoutNeurons);
 
-			for (size_t pp = Layers[i - 1].IndexVectorForNextLayerSize; pp--;)
+			for (int pp = Layers[i - 1].IndexVectorForNextLayerSize; pp--;)
 			{
 				p = Layers[i - 1].IndexVectorForNextLayer[pp];
 				numberIndex = pLS_ * (j - biasShift_) + p;
@@ -118,7 +117,7 @@ struct NeuralNetworkCuda
 			}
 		}
 	}
-	__device__ void PropagateBackCalculateGradients(int i, size_t batchCount, size_t weights_start, size_t weights_end) // i- layer index start და end წონის ვექტორის ქაუნთერია;
+	__device__ void PropagateBackCalculateGradients(int i, int batchCount, int weights_start, int weights_end) // i- layer index start და end წონის ვექტორის ქაუნთერია;
 	{
 		int numberIndex = 0;
 		float gradient = 0;
@@ -141,22 +140,22 @@ struct NeuralNetworkCuda
 
 	__device__ void  StartTesting()
 	{
-		for (size_t k = 0; k < LayersSize; k++)
+		for (int k = 0; k < LayersSize; k++)
 		{
 			if (Layers[k].LayerType == static_cast<int>(NeuralEnums::LayerType::HiddenLayer) && Layers[k].DropOutSize > 0)
 			{
-				size_t dropoutCounter = 0;
-				for (size_t i = 0; i < Layers[k].Size; i++)
+				int dropoutCounter = 0;
+				for (int i = 0; i < Layers[k].Size; i++)
 				{
 					if (Layers[k].DropoutNeurons[i])
 						dropoutCounter++;
 				}
 				delete[](Layers[k].IndexVector);
-				Layers[k].IndexVector = new size_t[dropoutCounter];
+				Layers[k].IndexVector = new int[dropoutCounter];
 
-				size_t biasShift = Layers[k].UsingBias ? 1 : 0;
-				size_t counter = 0;
-				for (size_t i = biasShift; i < Layers[k].Size; i++)
+				int biasShift = Layers[k].UsingBias ? 1 : 0;
+				int counter = 0;
+				for (int i = biasShift; i < Layers[k].Size; i++)
 				{
 					if (Layers[k].DropoutNeurons[i])
 					{
@@ -213,7 +212,7 @@ struct NeuralNetworkCuda
 				lossesTmp[i] = 0;
 			};
 
-			for (size_t i = 0; i < iterator; i++)
+			for (int i = 0; i < iterator; i++)
 			{
 				int start = i * chunkSize;
 				int end = (i + 1) == iterator ? Layers[LayersSize - 1].Size : (i + 1) * chunkSize;
@@ -221,7 +220,7 @@ struct NeuralNetworkCuda
 				int klbend = (i + 1) == iterator ? Layers[LayersSize - 2].Size : (i + 1) * hidenchunkSize;
 				// workers[i]->doAsync(std::bind(&NeuralNetwork::CalculateLossSub, this, start, end, klbstart, klbend, std::ref(lossesTmp[i])));
 			}
-			for (size_t k = 0; k < iterator; k++)
+			for (int k = 0; k < iterator; k++)
 				;// workers[k]->wait();
 
 			float result = 0.0;
@@ -243,7 +242,7 @@ struct NeuralNetworkCuda
 		}
 	}
 
-	__device__ void CalculateLossBatchSub(size_t start, size_t end, float& loss)
+	__device__ void CalculateLossBatchSub(int start, int end, float& loss)
 	{
 		float result = 0.0;
 		for (size_t i = start; i < end; i++)
@@ -251,14 +250,7 @@ struct NeuralNetworkCuda
 			result += CalculateLossFunctionCuda(LossFunctionType, Layers[LayersSize - 1].GetOutputsBatch(i), Layers[LayersSize - 1].GetTargetsBatch(i), 0, Layers[LayersSize - 1].Size, Layers[LayersSize - 1].Size);
 		}
 		loss = result;
-
-		//if (Type == static_cast<int>(NeuralEnums::NetworkType::AutoEncoder) && AutoEncoderType == static_cast<int>(NeuralEnums::AutoEncoderType::Sparce))
-		//{
-		//	klbResult += KullbackLeiblerDivergenceCuda(Layers[1].RoHat, ro, klbstart, klbend);
-		//}
-		//loss = result + klbResult;
 	}
-
 
 	__device__ float GetLearningRateMultipliedByGrad(float& gradient, int& iterator, int& j)
 	{
@@ -375,16 +367,6 @@ struct NeuralNetworkCuda
 		default:
 			break;
 		}
-	}
-
-	float getNetworkSize()
-	{
-		float result = 0;
-		for (size_t i = LayersSize; i--;)
-		{
-			result += Layers[i].getLayerSize();
-		}
-		return result;
 	}
 
 };
