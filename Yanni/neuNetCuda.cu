@@ -59,6 +59,13 @@ __global__ void checkResults(int maxinputs)
 		results[idx] = GetMaxIndexCuda(neuNet->Layers[neuNet->LayersSize - 1].GetOutputsBatch(idx), neuNet->Layers[neuNet->LayersSize - 1].Size)
 		== GetMaxIndexCuda(trainingSetCuda[idx].label, trainingSetCuda[idx].labelSize);
 }
+__global__ void clearResult(int size)
+{
+	for (size_t i = 0; i < size; i++)
+	{
+		results[i] = 0;
+	}
+}
 __global__ void countAccuracyPercent()
 {
 	int counter = 0;
@@ -422,7 +429,7 @@ void copyNetrworkCuda(NeuralNetwork& nn, MnistData* trainingSet, int trainingSet
 	ERRCHECK(cudaDeviceSynchronize());
 
 	int threadsPerBlock = deviceProp.maxThreadsPerBlock;
-	for (int globalEpochs = 0; globalEpochs < 300; globalEpochs++)
+	for (int globalEpochs = 0; globalEpochs < 600; globalEpochs++)
 	{
 		int blocksPerGrid = (nn.BatchSize * nn.Layers[0].Size + threadsPerBlock - 1) / threadsPerBlock;
 		int maxinputs = nn.Layers[0].Size * nn.BatchSize;
@@ -483,7 +490,9 @@ void copyNetrworkCuda(NeuralNetwork& nn, MnistData* trainingSet, int trainingSet
 
 		countAccuracyPercent << <1, 1 >> > ();
 		ERRCHECK(cudaDeviceSynchronize());
-		std::cout << "training result: " << passAccuracy << std::endl;
+		std::cout << "Epoch: "<<globalEpochs<<". training result: " << passAccuracy << std::endl;
+		clearResult << <1, 1 >> > (maxBatchSize);
+		ERRCHECK(cudaDeviceSynchronize());
 	}
 	ERRCHECK(cudaDeviceSynchronize());
 	auto ger2r = cudaGetLastError();
