@@ -21,11 +21,11 @@ __device__ struct LayerCuda
 	float* TempWeights;
 	float* Gradients;
 	float* GradientsLR;
-	float* Parameters;
-	float* InputsBatch;
 	float* GradientsBatch;
-	float* OutputsBatch;
-	float* TargetsBatch;
+	float* Parameters;
+	float* Inputs;
+	float* Outputs;
+	float* Targets;
 
 	__device__ inline float& GetNumberFromBatch(float* batch, int batchNumber, int count)
 	{
@@ -34,11 +34,11 @@ __device__ struct LayerCuda
 
 	__device__ inline float& GetInputsBatch(int batchNumber, int count)
 	{
-		return InputsBatch[batchNumber * Size + count];
+		return Inputs[batchNumber * Size + count];
 	}
 	__device__ inline float& GetOutputsBatch(int batchNumber, int count)
 	{
-		return OutputsBatch[batchNumber * Size + count];
+		return Outputs[batchNumber * Size + count];
 	}
 	__device__ inline float& GetGradientsBatch(int batchNumber, int count)
 	{
@@ -46,16 +46,16 @@ __device__ struct LayerCuda
 	}
 	__device__ inline float& GetTargetsBatch(int batchNumber, int count)
 	{
-		return TargetsBatch[batchNumber * Size + count];
+		return Targets[batchNumber * Size + count];
 	}
 
 	__device__ inline float* GetInputsBatch(int batchNumber)
 	{
-		return &InputsBatch[batchNumber * Size];
+		return &Inputs[batchNumber * Size];
 	}
 	__device__ inline float* GetOutputsBatch(int batchNumber)
 	{
-		return &OutputsBatch[batchNumber * Size];
+		return &Outputs[batchNumber * Size];
 	}
 	__device__ inline float* GetGradientsBatch(int batchNumber)
 	{
@@ -63,17 +63,16 @@ __device__ struct LayerCuda
 	}
 	__device__ inline float* GetTargetsBatch(int batchNumber)
 	{
-		return &TargetsBatch[batchNumber * Size];
+		return &Targets[batchNumber * Size];
 	}
 	__host__ __device__ LayerCuda() {}
 
 	//---------------------------------------------------
 	__device__ void CalculateInputs(
 		int prevLayerSize,
-		float* prevLayerOutputBatch,
+		float* prevLayerOutputs,
 		int* prevLayerIndexes,
 		int& prevLayerIndexVectorSize,
-		bool training,
 		int batch,
 		int start,
 		int end)
@@ -90,9 +89,9 @@ __device__ struct LayerCuda
 				i = prevLayerIndexes[ii];
 				l = batch * prevLayerSize;
 				w = (k - biasShift) * prevLayerSize;
-				result += prevLayerOutputBatch[l + i] * Weights[w + i];
+				result += prevLayerOutputs[l + i] * Weights[w + i];
 			}
-			GetInputsBatch(batch, k) = result;
+			Inputs[batch * Size + k] = result;
 		}
 	}
 
@@ -101,11 +100,11 @@ __device__ struct LayerCuda
 	{
 		//TODO ჩასამატებელია SoftMax რეალიზაცია 
 		ActivateWithCuda(
-			GetInputsBatch(batch),
-			GetOutputsBatch(batch),
+			&Inputs[batch * Size],
+			&Outputs[batch * Size],
 			IndexVector, start, end, ActivationFunction);
 		if (UsingBias)
-			GetOutputsBatch(batch, 0) = GetInputsBatch(batch, 0);
+			Outputs[batch * Size] = Inputs[batch * Size];
 	}
 
 };

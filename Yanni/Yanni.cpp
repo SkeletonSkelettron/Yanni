@@ -416,7 +416,7 @@ void readDataAndTest()
 			try
 			{
 				size_t seed = std::chrono::system_clock::now().time_since_epoch().count();
-				shuffle(index.begin(), index.end(), std::default_random_engine(seed));
+				// shuffle(index.begin(), index.end(), std::default_random_engine(seed));
 				clock_t beginInside = clock();
 
 				if (neuralNetwork.Type == NeuralEnums::NetworkType::Normal)

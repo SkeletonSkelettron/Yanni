@@ -79,6 +79,7 @@ __global__ void countAccuracyPercent()
 
 __global__ void checkLayers()
 {
+	passAccuracy = sqrtf(2.0f);
 	auto t = neuNet->Layers;
 }
 __global__ void setBatchSize(int batchSize)
@@ -108,8 +109,8 @@ __global__ void initLayer(
 	float* gradientsBatch,
 	float* targetsBatch, int layerType)
 {
-	neuNet->Layers[layerIdx].InputsBatch = inputsBatch;
-	neuNet->Layers[layerIdx].OutputsBatch = outputsBatch;
+	neuNet->Layers[layerIdx].Inputs = inputsBatch;
+	neuNet->Layers[layerIdx].Outputs = outputsBatch;
 	neuNet->Layers[layerIdx].Weights = weights;
 	neuNet->Layers[layerIdx].TempWeights = tempWeights;
 	neuNet->Layers[layerIdx].Gradients = gradients;
@@ -119,7 +120,7 @@ __global__ void initLayer(
 	neuNet->Layers[layerIdx].IndexVectorForNextLayer = nlIdxVec;
 	neuNet->Layers[layerIdx].DropoutNeurons = neur;
 	if (layerType == 2)
-		neuNet->Layers[layerIdx].TargetsBatch = targetsBatch;
+		neuNet->Layers[layerIdx].Targets = targetsBatch;
 }
 
 
@@ -133,11 +134,23 @@ __global__ void assignData(int iter, int maxinputs, bool testing)
 
 	if (idx < maxinputs)
 	{
-		neuNet->Layers[0].GetOutputsBatch(batch, j) = trainingSetCuda[curRow].set[j];
-
-		if (j < neuNet->Layers[neuNet->LayersSize - 1].Size)
+		if (!testing)
 		{
-			neuNet->Layers[neuNet->LayersSize - 1].GetTargetsBatch(batch, j) = trainingSetCuda[curRow].label[j];
+			neuNet->Layers[0].GetOutputsBatch(batch, j) = trainingSetCuda[curRow].set[j];
+
+			if (j < neuNet->Layers[neuNet->LayersSize - 1].Size)
+			{
+				neuNet->Layers[neuNet->LayersSize - 1].GetTargetsBatch(batch, j) = trainingSetCuda[curRow].label[j];
+			}
+		}
+		else
+		{
+			neuNet->Layers[0].GetOutputsBatch(batch, j) = testSetCuda[curRow].set[j];
+
+			if (j < neuNet->Layers[neuNet->LayersSize - 1].Size)
+			{
+				neuNet->Layers[neuNet->LayersSize - 1].GetTargetsBatch(batch, j) = testSetCuda[curRow].label[j];
+			}
 		}
 	}
 }
@@ -149,7 +162,8 @@ __global__ void propagateForward(int layerIdx, int maxinputs)
 	int j = idx % neuNet->Layers[layerIdx].IndexVectorSize;
 	if (idx < maxinputs)
 	{
-		neuNet->Layers[layerIdx].CalculateInputs(neuNet->Layers[layerIdx - 1].Size, neuNet->Layers[layerIdx - 1].OutputsBatch, neuNet->Layers[layerIdx - 1].IndexVectorForNextLayer, neuNet->Layers[layerIdx - 1].IndexVectorForNextLayerSize, true, batch, j, j + 1);
+		neuNet->Layers[layerIdx].CalculateInputs(neuNet->Layers[layerIdx - 1].Size, neuNet->Layers[layerIdx - 1].Outputs, neuNet->Layers[layerIdx - 1].IndexVectorForNextLayer, neuNet->Layers[layerIdx - 1].IndexVectorForNextLayerSize, batch, j, j + 1);
+//		neuNet->Layers[layerIdx].CalculateInputs(neuNet->Layers[layerIdx - 1].Size, neuNet->Layers[layerIdx - 1].Outputs, neuNet->Layers[layerIdx - 1].IndexVectorForNextLayer, neuNet->Layers[layerIdx - 1].IndexVectorForNextLayerSize, batch, 0, 1);
 		neuNet->Layers[layerIdx].CalculateOutputs(batch, j, j + 1, true, false);
 	}
 }
@@ -161,7 +175,7 @@ __global__ void propagateForwardTest(int layerIdx, int maxinputs)
 	int j = idx % neuNet->Layers[layerIdx].IndexVectorSize;
 	if (idx < maxinputs)
 	{
-		neuNet->Layers[layerIdx].CalculateInputs(neuNet->Layers[layerIdx - 1].Size, neuNet->Layers[layerIdx - 1].OutputsBatch, neuNet->Layers[layerIdx - 1].IndexVectorForNextLayer, neuNet->Layers[layerIdx - 1].IndexVectorForNextLayerSize, true, batch, j, j + 1);
+		neuNet->Layers[layerIdx].CalculateInputs(neuNet->Layers[layerIdx - 1].Size, neuNet->Layers[layerIdx - 1].Outputs, neuNet->Layers[layerIdx - 1].IndexVectorForNextLayer, neuNet->Layers[layerIdx - 1].IndexVectorForNextLayerSize, batch, j, j + 1);
 		neuNet->Layers[layerIdx].CalculateOutputs(batch, j, j + 1, true, false);
 	}
 }
@@ -206,10 +220,12 @@ __global__ void backPropCalcGradients(int layerIdx, int batchCount, int maxinput
 /// <param name="copyData"> - For testing puproses - false when testing</param>
 void copyNetrworkCuda(NeuralNetwork& nn, MnistData* trainingSet, int trainingSetSize, MnistData* testSet, int testSetSize, bool notTesting)
 {
+	checkLayers << <1, 1 >> > ();
+	ERRCHECK(cudaDeviceSynchronize());
+	float sqrt2 = sqrtf(2.0f);
 
-
-
-
+	std::cout << std::setprecision(15) << sqrt2 << std::endl;
+	std::cout << std::setprecision(15) << passAccuracy << std::endl;
 	NeuralNetworkCuda* d_neuralNetwork;
 	NeuralNetworkCuda neuNetCuda;
 
@@ -406,7 +422,7 @@ void copyNetrworkCuda(NeuralNetwork& nn, MnistData* trainingSet, int trainingSet
 	float* d_testset = NULL, * d_testlabel = NULL;
 	if (notTesting)
 	{
-		for (int i = 0; i < trainingSetSize - 1; i++)
+		for (int i = 0; i < trainingSetSize; i++)
 		{
 			ERRCHECK(cudaMalloc((void**)&d_set, sizeof(float) * trainingSet[i].setSize));
 			ERRCHECK(cudaMalloc((void**)&d_label, sizeof(float) * trainingSet[i].labelSize));
@@ -414,7 +430,7 @@ void copyNetrworkCuda(NeuralNetwork& nn, MnistData* trainingSet, int trainingSet
 			ERRCHECK(cudaMemcpy(d_label, trainingSet[i].label, sizeof(float) * trainingSet[i].labelSize, cudaMemcpyHostToDevice));
 			copyDeviceDataElements << <1, 1 >> > (d_set, d_label, i, false);
 		}
-		for (int i = 0; i < testSetSize - 1; i++)
+		for (int i = 0; i < testSetSize; i++)
 		{
 			ERRCHECK(cudaMalloc((void**)&d_testset, sizeof(float) * testSet[i].setSize));
 			ERRCHECK(cudaMalloc((void**)&d_testlabel, sizeof(float) * testSet[i].labelSize));
@@ -424,13 +440,17 @@ void copyNetrworkCuda(NeuralNetwork& nn, MnistData* trainingSet, int trainingSet
 		}
 	}
 	ERRCHECK(cudaDeviceSynchronize());
-	auto sdfsdfsdf = cudaGetLastError();
+
 	checkLayers << <1, 1 >> > ();
 	ERRCHECK(cudaDeviceSynchronize());
-
+	auto sdfsdfsdf = cudaGetLastError();
 	int threadsPerBlock = deviceProp.maxThreadsPerBlock;
-	for (int globalEpochs = 0; globalEpochs < 600; globalEpochs++)
+	int globalEpochsCount = 1;
+	std::cout << "enter global epochs count" << std::endl;
+	std::cin >> globalEpochsCount;
+	for (int globalEpochs = 0; globalEpochs < globalEpochsCount; globalEpochs++)
 	{
+		clock_t start = clock();
 		int blocksPerGrid = (nn.BatchSize * nn.Layers[0].Size + threadsPerBlock - 1) / threadsPerBlock;
 		int maxinputs = nn.Layers[0].Size * nn.BatchSize;
 
@@ -440,13 +460,19 @@ void copyNetrworkCuda(NeuralNetwork& nn, MnistData* trainingSet, int trainingSet
 		{
 			if (notTesting)
 				assignData << <blocksPerGrid, threadsPerBlock >> > (i, maxinputs, false);
+			ERRCHECK(cudaDeviceSynchronize());
 			// Forward propagation
 			for (int layerIdx = 1; layerIdx < nn.LayersSize; layerIdx++)
 			{
 				maxinputs = nn.Layers[layerIdx].IndexVectorSize * nn.BatchSize;
 				blocksPerGrid = (maxinputs + threadsPerBlock - 1) / threadsPerBlock;
 				propagateForward << <blocksPerGrid, threadsPerBlock >> > (layerIdx, maxinputs);
+				//propagateForward << <1, 1>> > (layerIdx, maxinputs);
+				ERRCHECK(cudaDeviceSynchronize());
 			}
+			checkLayers << <1, 1 >> > ();
+			ERRCHECK(cudaDeviceSynchronize());
+			sdfsdfsdf = cudaGetLastError();
 			// Back propagation
 			for (int layerIdx = nn.LayersSize - 1; layerIdx >= 1; layerIdx--)
 			{
@@ -461,12 +487,10 @@ void copyNetrworkCuda(NeuralNetwork& nn, MnistData* trainingSet, int trainingSet
 					blocksPerGrid = (maxinputs + threadsPerBlock - 1) / threadsPerBlock;
 					backPropCalcGradients << <blocksPerGrid, threadsPerBlock >> > (layerIdx, nn.BatchSize, maxinputs);
 				}
-				//backPropCalcGradients << <1, 1>> > (layerIdx, nn.BatchSize, maxinputs);
-	//#ifdef DEBUG
-	//			ERRCHECK(cudaDeviceSynchronize());
-	//#endif // DEBUG
 			}
 		}
+		checkLayers << <1, 1 >> > ();
+		ERRCHECK(cudaDeviceSynchronize());
 		ERRCHECK(cudaDeviceSynchronize());
 		auto ger2r = cudaGetLastError();
 		//test cycle
@@ -476,21 +500,28 @@ void copyNetrworkCuda(NeuralNetwork& nn, MnistData* trainingSet, int trainingSet
 		for (int i = 0; i < (testSetSize <= maxBatchSize ? 1 : maxBatchSize / testSetSize); i++) //  maxBatchSize % testSetSize !=0 case
 		{
 			assignData << <blocksPerGrid, threadsPerBlock >> > (i, maxinputs, true);
+			ERRCHECK(cudaDeviceSynchronize());
+			checkLayers << <1, 1 >> > ();
+			ERRCHECK(cudaDeviceSynchronize());
 			// Forward propagation
 			for (int layerIdx = 1; layerIdx < nn.LayersSize; layerIdx++)
 			{
 				maxinputs = nn.Layers[layerIdx].IndexVectorSize * maxBatchSize;
 				blocksPerGrid = (maxinputs + threadsPerBlock - 1) / threadsPerBlock;
 				propagateForward << <blocksPerGrid, threadsPerBlock >> > (layerIdx, maxinputs);
+				ERRCHECK(cudaDeviceSynchronize());
 			}
 			maxinputs = maxBatchSize;
 			blocksPerGrid = (maxinputs + threadsPerBlock - 1) / threadsPerBlock;
 			checkResults << <blocksPerGrid, threadsPerBlock >> > (maxinputs);
+			ERRCHECK(cudaDeviceSynchronize());
 		}
-
+		checkLayers << <1, 1 >> > ();
+		ERRCHECK(cudaDeviceSynchronize());
 		countAccuracyPercent << <1, 1 >> > ();
 		ERRCHECK(cudaDeviceSynchronize());
-		std::cout << "Epoch: "<<globalEpochs<<". training result: " << passAccuracy << std::endl;
+		clock_t end = clock();
+		std::cout << "Epoch: " << globalEpochs << " completed in " << (float(end - start) / CLOCKS_PER_SEC) << " seconds. training result: " << passAccuracy << std::endl;
 		clearResult << <1, 1 >> > (maxBatchSize);
 		ERRCHECK(cudaDeviceSynchronize());
 	}

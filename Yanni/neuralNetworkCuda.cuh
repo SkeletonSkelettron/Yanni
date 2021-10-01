@@ -86,24 +86,26 @@ __device__ struct NeuralNetworkCuda
 		float gradient;
 		int nls = Layers[i + 1].Size;
 		int j = 0, p = 0, l = 0;
+		int bj = 0;
 		for (int jj = start; jj < end; jj++)
 		{
 			j = Layers[i].IndexVector[jj];
+			bj = batch * Layers[i].Size + j;
 			// Output ლეიერი
 			if (i == LayersSize - 1)
-				Layers[i].GetOutputsBatch(batch, j) = DifferentiateLossWithCuda(Layers[i].GetOutputsBatch(batch, j), Layers[i].GetTargetsBatch(batch, j), LossFunctionType, Layers[i].Size);
+				Layers[i].Outputs[bj] = DifferentiateLossWithCuda(Layers[i].Outputs[bj], Layers[i].Targets[bj], LossFunctionType, Layers[i].Size);
 			else
 			{
 				int nextLayerBiasShift = Layers[i + 1].UsingBias ? 1 : 0;
-				Layers[i].GetOutputsBatch(batch, j) = 0;
+				Layers[i].Outputs[bj] = 0;
 
 				for (int ll = Layers[i + 1].IndexVectorSize; ll--;)
 				{
 					l = Layers[i + 1].IndexVector[ll];
-					Layers[i].GetOutputsBatch(batch, j) += Layers[i + 1].GetInputsBatch(batch, l) * Layers[i + 1].TempWeights[(l - nextLayerBiasShift) * curLayerSize + j];
+					Layers[i].Outputs[bj] += Layers[i + 1].GetInputsBatch(batch, l) * Layers[i + 1].TempWeights[(l - nextLayerBiasShift) * curLayerSize + j];
 				}
 			}
-			Layers[i].GetInputsBatch(batch, j) = Layers[i].GetOutputsBatch(batch, j) * DifferentiateWithCuda(Layers[i].GetInputsBatch(batch, j), Layers[i].ActivationFunction, Layers[i].GetInputsBatch(batch), Layers[i].DropoutNeurons);
+			Layers[i].Inputs[bj] = Layers[i].Outputs[bj] * DifferentiateWithCuda(Layers[i].Inputs[bj], Layers[i].ActivationFunction, Layers[i].GetInputsBatch(batch), Layers[i].DropoutNeurons);
 
 			for (int pp = Layers[i - 1].IndexVectorForNextLayerSize; pp--;)
 			{
@@ -113,7 +115,7 @@ __device__ struct NeuralNetworkCuda
 					Layers[i].TempWeights[numberIndex] = Layers[i].Weights[numberIndex];
 				if (BatchSize == 1)
 					//Layers[i].Gradients[numberIndex] = Layers[i].Inputs[j] * Layers[i - 1].Outputs[p];// ... if gradient optimization is needed
-					Layers[i].Weights[numberIndex] -= Layers[i].GetInputsBatch(batch, j) * Layers[i - 1].GetOutputsBatch(batch, p) * LearningRate;// Layers[i].Inputs[j] * Layers[i - 1].Outputs[p] ეს არის გრადიენტი GetLearningRateMultipliedByGrad(gradient/*Layers[i].Gradients[numberIndex]*/, i, numberIndex);
+					Layers[i].Weights[numberIndex] -= Layers[i].Inputs[bj] * Layers[i - 1].Outputs[batch * Layers[i - 1].Size + p] * LearningRate;// Layers[i].Inputs[j] * Layers[i - 1].Outputs[p] ეს არის გრადიენტი GetLearningRateMultipliedByGrad(gradient/*Layers[i].Gradients[numberIndex]*/, i, numberIndex);
 			}
 		}
 	}
@@ -123,13 +125,15 @@ __device__ struct NeuralNetworkCuda
 		float gradient = 0;
 		int pls = Layers[i - 1].Size;
 		int cli = 0, pli = 0;
+		int i_b = Layers[i].Size,  ip_b = Layers[i - 1].Size;
 		for (int wi = weights_start; wi < weights_end; wi++)
 		{
 			cli = Layers[i].IndexVector[wi / Layers[i - 1].IndexVectorForNextLayerSize];
 			pli = Layers[i - 1].IndexVectorForNextLayer[wi % Layers[i - 1].IndexVectorForNextLayerSize];
 			for (size_t b = 0; b < batchCount; b++)
 			{
-				gradient += Layers[i].GetInputsBatch(b, cli) * Layers[i - 1].GetOutputsBatch(b, pli);
+				
+				gradient += Layers[i].Inputs[i_b * b + cli] * Layers[i - 1].Outputs[ip_b * b + pli];
 			}
 			gradient /= batchCount;
 			int idx = pLS_ * (cli - biasShift_) + Layers[i - 1].IndexVectorForNextLayer[wi % Layers[i - 1].IndexVectorForNextLayerSize];
