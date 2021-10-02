@@ -136,11 +136,19 @@
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Od</Optimization>
-      <FastMath>false</FastMath>
+      <FastMath>
+      </FastMath>
       <Runtime>MDd</Runtime>
       <Warning>Wall</Warning>
       <PtxAsOptionV>true</PtxAsOptionV>
+      <AdditionalOptions> --fmad=false --ftz=false --prec-sqrt=true %(AdditionalOptions)</AdditionalOptions>
     </CudaCompile>
+    <CudaLink>
+      <GPUDebugInfo>true</GPUDebugInfo>
+    </CudaLink>
+    <CudaLink>
+      <Optimization>Od</Optimization>
+    </CudaLink>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -172,7 +180,7 @@
       <AdditionalDependencies>cuda.lib;cudart_static.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CudaCompile>
-      <AdditionalOptions>-Xcompiler "/wd 4819"  --fmad=false %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-Xcompiler "/wd 4819"   --fmad=false --ftz=false --prec-sqrt=true %(AdditionalOptions)</AdditionalOptions>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
       <Include>./;../../common/inc</Include>
       <TargetMachinePlatform>64</TargetMachinePlatform>
@@ -187,7 +195,14 @@
       <TypeInfo>false</TypeInfo>
       <Warning>W0</Warning>
       <PtxAsOptionV>false</PtxAsOptionV>
+      <FastMath />
     </CudaCompile>
+    <CudaLink>
+      <GPUDebugInfo>false</GPUDebugInfo>
+    </CudaLink>
+    <CudaLink>
+      <Optimization>Od</Optimization>
+    </CudaLink>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="activationFunctions.cpp" />

@@ -1,7 +1,7 @@
 ﻿#ifndef LAYERCUDA_H
 #define LAYERCUDA_H
 #include "enums.h"
-#include "activationFunctionsCuda.cuh"
+#include "ActivationFunctionsCuda.cuh"
 __device__ struct LayerCuda
 {
 	int Size;
@@ -17,15 +17,15 @@ __device__ struct LayerCuda
 	int* IndexVector;
 	int* IndexVectorForNextLayer;
 	int* DropoutNeurons;
+	float* Inputs;
 	float* Weights;
-	float* TempWeights;
+	float* MultipliedSums;
+	float* Outputs;
 	float* Gradients;
 	float* GradientsLR;
-	float* GradientsBatch;
 	float* Parameters;
-	float* Inputs;
-	float* Outputs;
 	float* Targets;
+	float* GradientsBatch;
 
 	__device__ inline float& GetNumberFromBatch(float* batch, int batchNumber, int count)
 	{
@@ -96,15 +96,17 @@ __device__ struct LayerCuda
 	}
 
 	//---------------------------------------------------
-	__device__ void CalculateOutputs(int& batch, int start, int end, bool training, bool countingRohat)
+	__device__ void CalculateOutputs(int batch, int start, int end)
 	{
 		//TODO ჩასამატებელია SoftMax რეალიზაცია 
 		ActivateWithCuda(
-			&Inputs[batch * Size],
-			&Outputs[batch * Size],
-			IndexVector, start, end, ActivationFunction);
+			GetInputsBatch(batch),
+			GetOutputsBatch(batch),
+			IndexVector,
+			IndexVectorSize, true,
+			DropoutNeurons, start, end, false, ActivationFunction);
 		if (UsingBias)
-			Outputs[batch * Size] = Inputs[batch * Size];
+			GetOutputsBatch(batch, 0) = GetInputsBatch(batch, 0);
 	}
 
 };

@@ -1,4 +1,4 @@
-﻿#include "activationFunctionsCuda.cuh"
+﻿#include "ActivationFunctionsCuda.cuh"
 #include <vector>
 #include <math.h>
 #include <cmath>
@@ -33,50 +33,51 @@ void ActivateWithCuda(
 	float* inputs,
 	float* outputs,
 	int* indexVector,
+	int& indexVectorSize,
+	bool batch,
+	int* drops,
 	int& start,
 	int& end,
+	bool usingdrops,
 	int& function)
 {
-	switch (function)
+	if (function == 1)
 	{
-	case (1):
+		SigmoidCuda(inputs, outputs, indexVector, indexVectorSize, batch, drops, start, end, usingdrops);
+		return;
+	}
+	else if (function == 3)
 	{
-		SigmoidCuda(inputs, outputs, indexVector, start, end);
-		break;
+		ReLUCuda(inputs, outputs, indexVector, indexVectorSize, batch, drops, start, end, usingdrops);
+		return;
 	}
-	case(3):
+	else if (function == 4)
 	{
-		ReLUCuda(inputs, outputs, indexVector, start, end);
-		break;
+		MReLUCuda(inputs, outputs, indexVector, indexVectorSize, batch, drops, start, end, usingdrops);
+		return;
 	}
-	case(4):
+	else if (function == 2)
 	{
-		MReLUCuda(inputs, outputs, indexVector, start, end);
-		break;
+		TanhCuda(inputs, outputs, indexVector, indexVectorSize, batch, drops, start, end, usingdrops);
+		return;
 	}
-	case(2):
+	else if (function == 6)
 	{
-		TanhCuda(inputs, outputs, indexVector, start, end);
-		break;
+		GeLUCuda(inputs, outputs, indexVector, indexVectorSize, batch, drops, start, end, usingdrops);
+		return;
 	}
-	case(6):
+	else if (function == 7)
 	{
-		GeLUCuda(inputs, outputs, indexVector, start, end);
-		break;
+		SoftPlusCuda(inputs, outputs, indexVector, indexVectorSize, batch, drops, start, end, usingdrops);
+		return;
 	}
-	case(7):
+	else if (function == 8)
 	{
-		SoftPlusCuda(inputs, outputs, indexVector, start, end);
-		break;
+		SoftSignCuda(inputs, outputs, indexVector, indexVectorSize, batch, drops, start, end, usingdrops);
+		return;
 	}
-	case(8):
-	{
-		SoftSignCuda(inputs, outputs, indexVector, start, end);
-		break;
-	}
-	default:
-		break;
-	}
+	//else
+	//	throw std::runtime_error("ActivationFunction not assigned");
 }
 
 
@@ -115,7 +116,7 @@ inline float SoftMaxDerivativeCuda(float& x, float* inputs, int* indexVector, in
 
 inline float SigmoidCuda(float& x)
 {
-	return  1.0f / (1.0f + expf(-x));
+	return  1.0 / (1.0 + exp(-x));
 }
 
 inline float SigmoidDerivativeCuda(float& x)
@@ -191,107 +192,168 @@ float exp1024Cuda(float x)
 }
 
 
-void GeLUCuda(float* inputs, float* outputs, int* indexVector, int& start, int& end)
+void GeLUCuda(float* inputs, float* outputs, int* indexVector, int& indexVectorSize, bool batch, int* drops, int& start, int& end, bool& usingdrops)
 {
-	for (int i = start; i < end; i++)
+	if (batch)
 	{
-		outputs[indexVector[i]] = GeLUCuda(inputs[indexVector[i]]);
+		for (int i = 0; i < indexVectorSize; i++)
+			outputs[indexVector[i]] = GeLUCuda(inputs[indexVector[i]]);
+	}
+	else
+	{
+		for (int i = start; i < end; i++)
+		{
+			if (usingdrops && drops[i] == 1)
+				continue;
+			outputs[i] = GeLUCuda(inputs[i]);
+		}
 	}
 }
-void SigmoidCuda(float* inputs, float* outputs, int* indexVector, int& start, int& end)
+void SigmoidCuda(float* inputs, float* outputs, int* indexVector, int& indexVectorSize, bool batch, int* drops, int& start, int& end, bool& usingdrops)
 {
-	for (int i = start; i < end; i++)
+	if (batch)
 	{
-		outputs[indexVector[i]] = SigmoidCuda(inputs[indexVector[i]]);
+		int i;
+		for (int ii = 0; ii < indexVectorSize; ii++)
+		{
+			i = indexVector[ii];
+			outputs[i] = SigmoidCuda(inputs[i]);
+		}
+	}
+	else
+	{
+		for (int i = start; i < end; i++)
+		{
+			if (usingdrops && drops[i] == 1)
+				continue;
+			outputs[i] = SigmoidCuda(inputs[i]);
+		}
 	}
 }
-void TanhCuda(float* inputs, float* outputs, int* indexVector, int& start, int& end)
+void TanhCuda(float* inputs, float* outputs, int* indexVector, int& indexVectorSize, bool batch, int* drops, int& start, int& end, bool& usingdrops)
 {
-	for (int i = start; i < end; i++)
+	if (batch)
 	{
-		outputs[indexVector[i]] = tanh(inputs[indexVector[i]]);
+		for (int i = 0; i < indexVectorSize; i++)
+			outputs[indexVector[i]] = tanh(inputs[indexVector[i]]);
+	}
+	else
+	{
+		for (int i = start; i < end; i++)
+		{
+			if (usingdrops && drops[i] == 1)
+				continue;
+			outputs[i] = tanh(inputs[i]);
+		}
 	}
 }
-void MReLUCuda(float* inputs, float* outputs, int* indexVector, int& start, int& end)
+void MReLUCuda(float* inputs, float* outputs, int* indexVector, int& indexVectorSize, bool batch, int* drops, int& start, int& end, bool& usingdrops)
 {
-	for (int i = start; i < end; i++)
+	if (batch)
 	{
-		outputs[indexVector[i]] = MReLUCuda(inputs[indexVector[i]]);
+		for (int i = 0; i < indexVectorSize; i++)
+			outputs[indexVector[i]] = MReLUCuda(inputs[indexVector[i]]);
+	}
+	else
+	{
+		for (int i = start; i < end; i++)
+		{
+			if (usingdrops && drops[i] == 1)
+				continue;
+			outputs[i] = MReLUCuda(inputs[i]);
+		}
 	}
 }
-void ReLUCuda(float* inputs, float* outputs, int* indexVector, int& start, int& end)
+void ReLUCuda(float* inputs, float* outputs, int* indexVector, int& indexVectorSize, bool batch, int* drops, int& start, int& end, bool& usingdrops)
 {
-	for (int i = start; i < end; i++)
+	if (batch)
 	{
-		outputs[indexVector[i]] = ReLUCuda(inputs[indexVector[i]]);
+		for (int i = 0; i < indexVectorSize; i++)
+			outputs[indexVector[i]] = ReLUCuda(inputs[indexVector[i]]);
+	}
+	else
+	{
+		for (int i = start; i < end; i++)
+		{
+			if (usingdrops && drops[i] == 1)
+				continue;
+			outputs[i] = ReLUCuda(inputs[i]);
+		}
 	}
 }
-//void SoftMaxCuda(float* inputs, float* inputsSoftMax, float* outputs, int* indexVector, int& indexVectorSize, bool batch, int* drops, int& start, int& end, bool& usingdrops)
-//{
-//	//TODO მაინც კაი სანახავია როგორ მუშაობს
-//	for (int i = 0; i < indexVectorSize; i++);
-//	// outputs[indexVectorSize[i]] = SoftMax(inputs[indexVectorSize[i]], inputsSoftMax, dropoutNeurons);
-//}
-void SoftPlusCuda(float* inputs, float* outputs, int* indexVector, int& start, int& end)
+void SoftMaxCuda(float* inputs, float* inputsSoftMax, float* outputs, int* indexVector, int& indexVectorSize, bool batch, int* drops, int& start, int& end, bool& usingdrops)
 {
-	for (int i = start; i < end; i++)
+	//TODO მაინც კაი სანახავია როგორ მუშაობს
+	for (int i = 0; i < indexVectorSize; i++);
+	// outputs[indexVectorSize[i]] = SoftMax(inputs[indexVectorSize[i]], inputsSoftMax, dropoutNeurons);
+}
+void SoftPlusCuda(float* inputs, float* outputs, int* indexVector, int& indexVectorSize, bool batch, int* drops, int& start, int& end, bool& usingdrops)
+{
+	if (batch)
 	{
-		outputs[indexVector[i]] = SoftPlusCuda(inputs[indexVector[i]]);
+		for (int i = 0; i < indexVectorSize; i++)
+			outputs[indexVector[i]] = SoftPlusCuda(inputs[indexVector[i]]);
+	}
+	else
+	{
+		for (int i = start; i < end; i++)
+		{
+			if (usingdrops && drops[i] == 1)
+				continue;
+			outputs[i] = SoftPlusCuda(inputs[i]);
+		}
 	}
 }
-void SoftSignCuda(float* inputs, float* outputs, int* indexVector, int& start, int& end)
+void SoftSignCuda(float* inputs, float* outputs, int* indexVector, int& indexVectorSize, bool batch, int* drops, int& start, int& end, bool& usingdrops)
 {
-	for (int i = start; i < end; i++)
+	if (batch)
 	{
-		outputs[indexVector[i]] = SoftSignCuda(inputs[indexVector[i]]);
+		for (int i = 0; i < indexVectorSize; i++)
+			outputs[indexVector[i]] = SoftSignCuda(inputs[indexVector[i]]);
+	}
+	else
+	{
+		for (int i = start; i < end; i++)
+		{
+			if (usingdrops && drops[i] == 1)
+				continue;
+			outputs[i] = SoftSignCuda(inputs[i]);
+		}
 	}
 }
 
-void AssignCuda(float* inputs, float* outputs, int* indexVector, int& start, int& end)
+void AssignCuda(float* inputs, float* outputs, int* indexVector, int& indexVectorSize, bool batch, int* drops, int& start, int& end, bool& usingdrops)
 {
-	for (int i = start; i < end; i++)
+	if (batch)
 	{
-		outputs[indexVector[i]] = inputs[indexVector[i]];
+		for (int i = 0; i < indexVectorSize; i++)
+			outputs[indexVector[i]] = inputs[indexVector[i]];
+	}
+	else
+	{
+		for (int i = start; i < end; i++)
+		{
+			if (usingdrops && drops[i] == 1)
+				continue;
+			outputs[i] = inputs[i];
+		}
 	}
 }
 
 float DifferentiateWithCuda(float& x, int& function, float* inputs, int* dropouts)
 {
-	switch (function)
-	{
-	case(1):
-	{
+	if (function == static_cast<int>(NeuralEnums::ActivationFunction::Sigmoid))
 		return SigmoidDerivativeCuda(x);
-		break;
-	}
-	case(3):
-	{
+	else if (function == static_cast<int>(NeuralEnums::ActivationFunction::ReLU))
 		return ReLUDerivativeCuda(x);
-		break;
-	}
-	case(4):
-	{
+	else if (function == static_cast<int>(NeuralEnums::ActivationFunction::MReLU))
 		return MReLUDerivativeCuda(x);
-		break;
-	}
-	case(2):
-	{
+	else if (function == static_cast<int>(NeuralEnums::ActivationFunction::Tanh))
 		return TanhDerivativeCuda(x);
-		break;
-	}
-	case(6):
-	{
+	else if (function == static_cast<int>(NeuralEnums::ActivationFunction::GeLU))
 		return GeLUDerivativeCuda(x);
-		break;
-	}
-	case(7):
-	{
+	else if (function == static_cast<int>(NeuralEnums::ActivationFunction::SoftPlus))
 		return SoftPlusDerivativeCuda(x);
-		break;
-	}
-	default:
-	{
-		break;
-	}
-	}
+	//else
+	//	throw std::runtime_error("ActivationFunction not assigned");
 }

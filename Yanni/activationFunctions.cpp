@@ -181,13 +181,13 @@ inline float SoftMaxDerivative(float& x, float* inputs, int* indexVector, int& i
 
 inline float Sigmoid(float& x)
 {
-	return  1.0f / (1.0f + expf(-x));
+	return  1.0f / (1.0f + exp(-x));
 }
 
 inline float SigmoidDerivative(float& x)
 {
 	float sigm = Sigmoid(x);
-	return sigm * (1.0 - sigm);
+	return sigm * (1.0f - sigm);
 }
 
 inline float ReLU(float& x)
