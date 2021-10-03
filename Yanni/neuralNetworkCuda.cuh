@@ -100,16 +100,16 @@ __device__ struct NeuralNetworkCuda
 				for (int ll = Layers[i + 1].IndexVectorSize; ll--;)
 				{
 					l = Layers[i + 1].IndexVector[ll];
-					Layers[i].Outputs[bj] += Layers[i + 1].GetInputsBatch(batch, l) * Layers[i + 1].TempWeights[(l - nextLayerBiasShift) * Layers[i].Size + j];
+					Layers[i].Outputs[bj] += Layers[i + 1].Inputs[batch * Layers[i + 1].Size + l] * Layers[i + 1].TempWeights[(l - nextLayerBiasShift) * Layers[i].Size + j];
 				}
 			}
-			Layers[i].Inputs[bj] = Layers[i].Outputs[bj] * DifferentiateWithCuda(Layers[i].Inputs[bj], Layers[i].ActivationFunction, Layers[i].GetInputsBatch(batch), Layers[i].DropoutNeurons);
+			Layers[i].Inputs[bj] = Layers[i].Outputs[bj] * DifferentiateWithCuda(Layers[i].Inputs[bj], Layers[i].ActivationFunction, &Layers[i].Inputs[batch* Layers[i].Size], Layers[i].DropoutNeurons);
 
 			for (int pp = Layers[i - 1].IndexVectorForNextLayerSize; pp--;)
 			{
 				p = Layers[i - 1].IndexVectorForNextLayer[pp];
 				numberIndex = pLS_ * (j - biasShift_) + p;
-				if (i != 1)
+				if (i != 1 && BatchSize != 1)
 					Layers[i].TempWeights[numberIndex] = Layers[i].Weights[numberIndex];
 				if (BatchSize == 1)
 					//Layers[i].Gradients[numberIndex] = Layers[i].Inputs[j] * Layers[i - 1].Outputs[p];// ... if gradient optimization is needed
