@@ -33,6 +33,7 @@ __device__ struct NeuralNetworkCuda
 	float beta1Pow;
 	float beta2Pow;
 	float betaAELR;
+	int MaxBachSize;
 
 	const float momentum = 0.9;
 	const float epsilon = 0.0000001;

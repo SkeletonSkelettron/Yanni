@@ -332,7 +332,7 @@ void ReadData(std::vector<std::vector<float>>& trainingSet, std::vector<std::vec
 			testLabels[k][g] = (_testlabels[k] == g ? 1.0f : 0.0f);
 	}
 }
-void copyNetrworkCuda(NeuralNetwork& nn, MnistData* trainingSet, int trainingSetSize, MnistData* testSet, int testSetSize);
+void copyNetrworkCuda(NeuralNetwork& nn, MnistData* trainingSet, int trainingSetSize, MnistData* testSet, int testSetSize, bool notTesting);
 int copyClass();
 void readDataAndTest()
 {
@@ -397,7 +397,7 @@ void readDataAndTest()
 		cuDeviceGet(&cudaDevice, 0);
 		cuDeviceGetName(cudaDeviceName, 100, cudaDevice);
 		cout << "found CUDA device: " + std::string(cudaDeviceName) + ". Count: " + std::to_string(deviceCount) << endl;
-		copyNetrworkCuda(neuralNetwork, trainingSet, trainingSetSize, testSet, testSetSize);
+		copyNetrworkCuda(neuralNetwork, trainingSet, trainingSetSize, testSet, testSetSize, true);
 		//copyClass();
 	}
 	else

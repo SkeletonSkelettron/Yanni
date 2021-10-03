@@ -19,6 +19,7 @@ __device__ struct LayerCuda
 	int* DropoutNeurons;
 	float* Inputs;
 	float* Weights;
+	float* TempWeights;
 	float* MultipliedSums;
 	float* Outputs;
 	float* Gradients;
