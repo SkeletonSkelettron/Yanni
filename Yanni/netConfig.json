@@ -3,7 +3,7 @@
   "Cuda": true,
   "ThreadCount": 10,
   "LearningRate": 0.6,
-  "BatchSize": 1000,
+  "BatchSize": 1,
   "LearningRateType": "Static",
   "Balance": "GaussianStandartization",
   "LossFunction": "MeanSquaredError",

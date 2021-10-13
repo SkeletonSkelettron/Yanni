@@ -43,7 +43,8 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -120,9 +121,12 @@
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
-      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <ConformanceMode>Default</ConformanceMode>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <FloatingPointModel>Strict</FloatingPointModel>
+      <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
+      <FloatingPointExceptions>true</FloatingPointExceptions>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -136,12 +140,11 @@
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Od</Optimization>
-      <FastMath>
-      </FastMath>
+      <FastMath>false</FastMath>
       <Runtime>MDd</Runtime>
       <Warning>Wall</Warning>
       <PtxAsOptionV>true</PtxAsOptionV>
-      <AdditionalOptions> --fmad=false --ftz=false --prec-sqrt=true %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>--ftz=false --prec-div=true --prec-sqrt=true %(AdditionalOptions)</AdditionalOptions>
     </CudaCompile>
     <CudaLink>
       <GPUDebugInfo>true</GPUDebugInfo>
@@ -180,7 +183,7 @@
       <AdditionalDependencies>cuda.lib;cudart_static.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CudaCompile>
-      <AdditionalOptions>-Xcompiler "/wd 4819"   --fmad=false --ftz=false --prec-sqrt=true %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-Xcompiler "/wd 4819"  %(AdditionalOptions)</AdditionalOptions>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
       <Include>./;../../common/inc</Include>
       <TargetMachinePlatform>64</TargetMachinePlatform>
@@ -195,7 +198,7 @@
       <TypeInfo>false</TypeInfo>
       <Warning>W0</Warning>
       <PtxAsOptionV>false</PtxAsOptionV>
-      <FastMath />
+      <FastMath>true</FastMath>
     </CudaCompile>
     <CudaLink>
       <GPUDebugInfo>false</GPUDebugInfo>
@@ -239,6 +242,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="netConfig.json" />
+    <None Include="ode_homework.m" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="activationFunctionsCuda.cu" />

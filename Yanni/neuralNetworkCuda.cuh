@@ -109,7 +109,7 @@ __device__ struct NeuralNetworkCuda
 			{
 				p = Layers[i - 1].IndexVectorForNextLayer[pp];
 				numberIndex = pLS_ * (j - biasShift_) + p;
-				if (i != 1 && BatchSize != 1)
+				if (i != 1)
 					Layers[i].TempWeights[numberIndex] = Layers[i].Weights[numberIndex];
 				if (BatchSize == 1)
 					//Layers[i].Gradients[numberIndex] = Layers[i].Inputs[j] * Layers[i - 1].Outputs[p];// ... if gradient optimization is needed
@@ -371,7 +371,10 @@ __device__ struct NeuralNetworkCuda
 			break;
 		}
 	}
-
+	__device__ float getResult() 
+	{
+		return 0.71177965666084123452342345f * 0.63584752714172354234581f + 0.13461423452345411116676f * 0.79970759882532455675083f + 0.481727768973546119849898f * 0.08652914346112446344634564634f;
+	}
 };
 
 #endif //NEURALNETWORKCUDA_H

@@ -112,6 +112,7 @@
     <None Include="netConfig.json">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="ode_homework.m" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="activationFunctionsCuda.cu">
