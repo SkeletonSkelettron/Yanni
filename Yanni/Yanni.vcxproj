@@ -242,7 +242,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="netConfig.json" />
-    <None Include="ode_homework.m" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="activationFunctionsCuda.cu" />
