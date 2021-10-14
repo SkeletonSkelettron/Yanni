@@ -382,6 +382,7 @@ void copyNetrworkCuda(NeuralNetwork& nn, MnistData* trainingSet, int trainingSet
 		float* h_tset = NULL, * h_tlabel = NULL;
 		float* d_set = NULL, * d_label = NULL;
 		float* d_testset = NULL, * d_testlabel = NULL;
+
 		h_set = new float[trainingSetSize * trainingSet[0].setSize];
 		h_label = new float[trainingSetSize * trainingSet[0].labelSize];
 
@@ -407,7 +408,7 @@ void copyNetrworkCuda(NeuralNetwork& nn, MnistData* trainingSet, int trainingSet
 		blocksPerGrid = (testSet[0].setSize * testSetSize + threadsPerBlock - 1) / threadsPerBlock;
 
 		for (int i = 0; i < testSetSize * testSet[0].setSize; i++)
-			h_set[i] = testSet[i / testSet[0].setSize].set[i % testSet[0].setSize];
+			h_tset[i] = testSet[i / testSet[0].setSize].set[i % testSet[0].setSize];
 		for (int i = 0; i < testSetSize * testSet[0].labelSize; i++)
 			h_tlabel[i] = testSet[i / testSet[0].labelSize].label[i % testSet[0].labelSize];
 
@@ -485,8 +486,6 @@ void copyNetrworkCuda(NeuralNetwork& nn, MnistData* trainingSet, int trainingSet
 		{
 			assignData << <blocksPerGrid, threadsPerBlock >> > (i, maxinputs, true);
 			ERRCHECK(cudaDeviceSynchronize());
-			checkLayers << <1, 1 >> > ();
-			ERRCHECK(cudaDeviceSynchronize());
 			// Forward propagation
 			for (int layerIdx = 1; layerIdx < nn.LayersSize; layerIdx++)
 			{
@@ -495,6 +494,8 @@ void copyNetrworkCuda(NeuralNetwork& nn, MnistData* trainingSet, int trainingSet
 				propagateForward << <blocksPerGrid, threadsPerBlock >> > (layerIdx, maxinputs);
 				ERRCHECK(cudaDeviceSynchronize());
 			}
+			checkLayers << <1, 1 >> > ();
+			ERRCHECK(cudaDeviceSynchronize());
 			maxinputs = maxBatchSize;
 			blocksPerGrid = (maxinputs + threadsPerBlock - 1) / threadsPerBlock;
 			checkResults << <blocksPerGrid, threadsPerBlock >> > (maxinputs);

@@ -50,8 +50,8 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
-    <WholeProgramOptimization>false</WholeProgramOptimization>
-    <CharacterSet>NotSet</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -165,15 +165,16 @@
       <ConformanceMode>Default</ConformanceMode>
       <SupportJustMyCode>true</SupportJustMyCode>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
-      <FloatingPointModel>Precise</FloatingPointModel>
-      <FloatingPointExceptions>false</FloatingPointExceptions>
+      <FloatingPointModel>Strict</FloatingPointModel>
+      <FloatingPointExceptions>true</FloatingPointExceptions>
       <OpenMPSupport>true</OpenMPSupport>
       <DebugInformationFormat />
       <WholeProgramOptimization>true</WholeProgramOptimization>
       <LanguageStandard>stdcpp14</LanguageStandard>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -183,7 +184,7 @@
       <AdditionalDependencies>cuda.lib;cudart_static.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CudaCompile>
-      <AdditionalOptions>-Xcompiler "/wd 4819"  %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>--ftz=false --prec-div=true --prec-sqrt=true %(AdditionalOptions)</AdditionalOptions>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
       <Include>./;../../common/inc</Include>
       <TargetMachinePlatform>64</TargetMachinePlatform>
@@ -192,13 +193,13 @@
       <GenerateLineInfo>false</GenerateLineInfo>
       <HostDebugInfo>false</HostDebugInfo>
       <DebugInformationFormat>None</DebugInformationFormat>
-      <Optimization>O2</Optimization>
+      <Optimization>Od</Optimization>
       <Runtime>MD</Runtime>
       <RuntimeChecks>Default</RuntimeChecks>
       <TypeInfo>false</TypeInfo>
       <Warning>W0</Warning>
-      <PtxAsOptionV>false</PtxAsOptionV>
-      <FastMath>true</FastMath>
+      <PtxAsOptionV>true</PtxAsOptionV>
+      <FastMath>false</FastMath>
     </CudaCompile>
     <CudaLink>
       <GPUDebugInfo>false</GPUDebugInfo>
