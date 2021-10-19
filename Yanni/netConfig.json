@@ -1,6 +1,6 @@
 {
     "Type": "Normal",
-    "Cuda": false,
+    "Cuda": true,
     "ThreadCount": 10,
     "LearningRate": 0.6,
     "BatchSize": 1000,

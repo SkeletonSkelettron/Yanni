@@ -220,12 +220,8 @@ __global__ void backPropCalcGradients(int layerIdx, int batchCount, int maxinput
 /// <param name="copyData"> - For testing puproses - false when testing</param>
 void copyNetrworkCuda(NeuralNetwork& nn, MnistData* trainingSet, int trainingSetSize, MnistData* testSet, int testSetSize, bool notTesting)
 {
-	checkLayers << <1, 1 >> > ();
 	ERRCHECK(cudaDeviceSynchronize());
-	float sqrt2 = sqrtf(2.0f);
 
-	std::cout << std::setprecision(15) << sqrt2 << std::endl;
-	std::cout << std::setprecision(15) << passAccuracy << std::endl;
 	NeuralNetworkCuda* d_neuralNetwork;
 	NeuralNetworkCuda neuNetCuda;
 

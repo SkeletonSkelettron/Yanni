@@ -397,7 +397,7 @@ void readDataAndTest()
 		cuDeviceGet(&cudaDevice, 0);
 		cuDeviceGetName(cudaDeviceName, 100, cudaDevice);
 		cout << "found CUDA device: " + std::string(cudaDeviceName) + ". Count: " + std::to_string(deviceCount) << endl;
-		copyNetrworkCuda(neuralNetwork, trainingSet, trainingSetSize, testSet, testSetSize, true);
+		copyNetrworkCuda(neuralNetwork, trainingSet, trainingSetSize, trainingSet, trainingSetSize, true);
 		//copyClass();
 	}
 	else
