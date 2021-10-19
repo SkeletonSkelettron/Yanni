@@ -40,9 +40,6 @@ __device__ struct NeuralNetworkCuda
 	const float beta1 = 0.9;
 	const float beta2 = 0.999;
 
-	int pLS_ = 0;
-	int biasShift_ = 0;
-	int curLayerSize = 0;
 	//weight decay parameter for sparce autoencoder
 	float lambda = 0.7;
 	__host__ __device__ NeuralNetworkCuda() {}
@@ -85,6 +82,8 @@ __device__ struct NeuralNetworkCuda
 		int numberIndex = 0;
 		float gradient;
 		int nls = Layers[i + 1].Size;
+		int pLS_ = Layers[i - 1].Size;
+		bool biasShift_ = Layers[i].UsingBias ? 1 : 0;
 		int j = 0, p = 0, l = 0;
 		int bj = 0;
 		for (int jj = start; jj < end; jj++)
@@ -102,7 +101,7 @@ __device__ struct NeuralNetworkCuda
 				for (int ll = Layers[i + 1].IndexVectorSize; ll--;)
 				{
 					l = Layers[i + 1].IndexVector[ll];
-					Layers[i].Outputs[bj] += Layers[i + 1].GetInputsBatch(batch, l) * Layers[i + 1].TempWeights[(l - nextLayerBiasShift) * curLayerSize + j];
+					Layers[i].Outputs[bj] += Layers[i + 1].GetInputsBatch(batch, l) * Layers[i + 1].TempWeights[(l - nextLayerBiasShift) * Layers[i].Size + j];
 				}
 			}
 			Layers[i].Inputs[bj] = Layers[i].Outputs[bj] * DifferentiateWithCuda(Layers[i].Inputs[bj], Layers[i].ActivationFunction, Layers[i].GetInputsBatch(batch), Layers[i].DropoutNeurons);
@@ -124,6 +123,8 @@ __device__ struct NeuralNetworkCuda
 		int numberIndex = 0;
 		float gradient = 0;
 		int pls = Layers[i - 1].Size;
+		bool biasShift_ = Layers[i].UsingBias ? 1 : 0;
+		int pLS_ = Layers[i - 1].Size;
 		int cli = 0, pli = 0;
 		int i_b = Layers[i].Size,  ip_b = Layers[i - 1].Size;
 		for (int wi = weights_start; wi < weights_end; wi++)
