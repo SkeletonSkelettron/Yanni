@@ -145,6 +145,7 @@
       <Warning>Wall</Warning>
       <PtxAsOptionV>true</PtxAsOptionV>
       <AdditionalOptions>--ftz=false --prec-div=true --prec-sqrt=true %(AdditionalOptions)</AdditionalOptions>
+      <GPUDebugInfo>true</GPUDebugInfo>
     </CudaCompile>
     <CudaLink>
       <GPUDebugInfo>true</GPUDebugInfo>
@@ -193,19 +194,19 @@
       <GenerateLineInfo>false</GenerateLineInfo>
       <HostDebugInfo>false</HostDebugInfo>
       <DebugInformationFormat>None</DebugInformationFormat>
-      <Optimization>Od</Optimization>
+      <Optimization>O3</Optimization>
       <Runtime>MD</Runtime>
       <RuntimeChecks>Default</RuntimeChecks>
       <TypeInfo>false</TypeInfo>
       <Warning>W0</Warning>
-      <PtxAsOptionV>true</PtxAsOptionV>
+      <PtxAsOptionV>false</PtxAsOptionV>
       <FastMath>false</FastMath>
     </CudaCompile>
     <CudaLink>
       <GPUDebugInfo>false</GPUDebugInfo>
     </CudaLink>
     <CudaLink>
-      <Optimization>Od</Optimization>
+      <Optimization>O2</Optimization>
     </CudaLink>
   </ItemDefinitionGroup>
   <ItemGroup>

@@ -174,6 +174,7 @@ __global__ void backProp(int k, int maxinputs)
 	if (idx < maxinputs)
 	{
 		neuNet->PropagateBack(k, batch, j, j + 1);
+		//neuNet->PropagateBack(k, batch, 0, maxinputs);
 	}
 }
 
@@ -461,7 +462,6 @@ void copyNetrworkCuda(NeuralNetwork& nn, MnistData* trainingSet, int trainingSet
 				maxinputs = nn.Layers[layerIdx].IndexVectorSize * nn.BatchSize;
 				blocksPerGrid = (maxinputs + threadsPerBlock - 1) / threadsPerBlock;
 				backProp << <blocksPerGrid, threadsPerBlock >> > (layerIdx, maxinputs);
-				//backProp << <1, 1 >> > (layerIdx, maxinputs);
 				ERRCHECK(cudaDeviceSynchronize());
 				if (nn.BatchSize > 1)
 				{
