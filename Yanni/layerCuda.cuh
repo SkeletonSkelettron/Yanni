@@ -109,6 +109,17 @@ __device__ struct LayerCuda
 		if (UsingBias)
 			GetOutputsBatch(batch, 0) = GetInputsBatch(batch, 0);
 	}
+		//---------------------------------------------------
+	//__device__ void CalculateOutputs(int& batch, int start, int end, bool training, bool countingRohat)
+	//{
+	//	//TODO ჩასამატებელია SoftMax რეალიზაცია 
+	//	ActivateWithCuda(
+	//		&Inputs[batch * Size],
+	//		&Outputs[batch * Size],
+	//		IndexVector, start, end, ActivationFunction);
+	//	if (UsingBias)
+	//		Outputs[batch * Size] = Inputs[batch * Size];
+	//}
 
 };
 

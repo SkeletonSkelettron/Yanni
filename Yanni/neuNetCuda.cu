@@ -162,6 +162,7 @@ __global__ void propagateForward(int k, int maxinputs)
 	if (idx < maxinputs)
 	{
 		neuNet->Layers[k].CalculateInputs(neuNet->Layers[k - 1].Size, neuNet->Layers[k - 1].Outputs, neuNet->Layers[k - 1].IndexVectorForNextLayer, neuNet->Layers[k - 1].IndexVectorForNextLayerSize, batch, j, j + 1);
+		//neuNet->Layers[k].CalculateOutputs(batch, j, j + 1, true, false);
 		neuNet->Layers[k].CalculateOutputs(batch, j, j + 1);
 	}
 }
