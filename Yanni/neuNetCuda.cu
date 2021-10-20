@@ -162,7 +162,6 @@ __global__ void propagateForward(int k, int maxinputs)
 	if (idx < maxinputs)
 	{
 		neuNet->Layers[k].CalculateInputs(neuNet->Layers[k - 1].Size, neuNet->Layers[k - 1].Outputs, neuNet->Layers[k - 1].IndexVectorForNextLayer, neuNet->Layers[k - 1].IndexVectorForNextLayerSize, batch, j, j + 1);
-		//neuNet->Layers[k].CalculateOutputs(batch, j, j + 1, true, false);
 		neuNet->Layers[k].CalculateOutputs(batch, j, j + 1);
 	}
 }
@@ -458,6 +457,8 @@ void copyNetrworkCuda(NeuralNetwork& nn, MnistData* trainingSet, int trainingSet
 				//propagateForward << <1, 1 >> > (layerIdx, maxinputs);
 				ERRCHECK(cudaDeviceSynchronize());
 			}
+			checkLayers << <1, 1 >> > ();
+			ERRCHECK(cudaDeviceSynchronize());
 			for (int layerIdx = nn.LayersSize - 1; layerIdx >= 1; layerIdx--)
 			{
 				maxinputs = nn.Layers[layerIdx].IndexVectorSize * nn.BatchSize;

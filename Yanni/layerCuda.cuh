@@ -97,29 +97,16 @@ __device__ struct LayerCuda
 	}
 
 	//---------------------------------------------------
-	__device__ void CalculateOutputs(int batch, int start, int end)
+	__device__ void CalculateOutputs(int& batch, int start, int end)
 	{
 		//TODO ჩასამატებელია SoftMax რეალიზაცია 
 		ActivateWithCuda(
-			GetInputsBatch(batch),
-			GetOutputsBatch(batch),
-			IndexVector,
-			IndexVectorSize, true,
-			DropoutNeurons, start, end, false, ActivationFunction);
+			&Inputs[batch * Size],
+			&Outputs[batch * Size],
+			IndexVector, start, end, ActivationFunction);
 		if (UsingBias)
-			GetOutputsBatch(batch, 0) = GetInputsBatch(batch, 0);
+			Outputs[batch * Size] = Inputs[batch * Size];
 	}
-		//---------------------------------------------------
-	//__device__ void CalculateOutputs(int& batch, int start, int end, bool training, bool countingRohat)
-	//{
-	//	//TODO ჩასამატებელია SoftMax რეალიზაცია 
-	//	ActivateWithCuda(
-	//		&Inputs[batch * Size],
-	//		&Outputs[batch * Size],
-	//		IndexVector, start, end, ActivationFunction);
-	//	if (UsingBias)
-	//		Outputs[batch * Size] = Inputs[batch * Size];
-	//}
 
 };
 
