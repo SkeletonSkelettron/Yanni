@@ -185,7 +185,6 @@
       <AdditionalDependencies>cuda.lib;cudart_static.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CudaCompile>
-      <AdditionalOptions>--ftz=false --prec-div=true --prec-sqrt=true %(AdditionalOptions)</AdditionalOptions>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
       <Include>./;../../common/inc</Include>
       <TargetMachinePlatform>64</TargetMachinePlatform>
@@ -200,7 +199,7 @@
       <TypeInfo>false</TypeInfo>
       <Warning>W0</Warning>
       <PtxAsOptionV>false</PtxAsOptionV>
-      <FastMath>false</FastMath>
+      <FastMath>true</FastMath>
     </CudaCompile>
     <CudaLink>
       <GPUDebugInfo>false</GPUDebugInfo>
