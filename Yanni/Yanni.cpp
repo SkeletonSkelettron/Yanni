@@ -3,7 +3,7 @@
 
 using namespace std;
 
-void copyNetrworkCuda(NeuralNetwork& nn, MnistData* trainingSet, int trainingSetSize, MnistData* testSet, int testSetSize, bool notTesting);
+//void copyNetrworkCuda(NeuralNetwork& nn, MnistData* trainingSet, int trainingSetSize, MnistData* testSet, int testSetSize, bool notTesting);
 void testNet()
 {
 	float* ar = new float[4];
@@ -115,7 +115,7 @@ void testNet()
 	//initTrainingAndTestData<double>(neuralNetwork, trainingSet, 1, NULL, 0);
 	neuralNetwork.PrepareForTesting();
 
-	 copyNetrworkCuda(neuralNetwork, nullptr, 60000, nullptr, 0, false);
+	 //copyNetrworkCuda(neuralNetwork, nullptr, 60000, nullptr, 0, false);
 	for (size_t i = 0; i < 100; i++)
 	{
 		auto loss = neuralNetwork.PropagateForwardThreaded(true, false); // პირველი loss უნდა იყოს 0.20739494219121993   float ზე 0.414789855
@@ -390,12 +390,12 @@ void readDataAndTest()
 		int deviceCount = 0;
 		int cudaDevice = 0;
 		char cudaDeviceName[100];
-		cuInit(0);
-		cuDeviceGetCount(&deviceCount);
-		cuDeviceGet(&cudaDevice, 0);
-		cuDeviceGetName(cudaDeviceName, 100, cudaDevice);
+		// cuInit(0);
+		// cuDeviceGetCount(&deviceCount);
+		// cuDeviceGet(&cudaDevice, 0);
+		// cuDeviceGetName(cudaDeviceName, 100, cudaDevice);
 		cout << "found CUDA device: " + std::string(cudaDeviceName) + ". Count: " + std::to_string(deviceCount) << endl;
-		copyNetrworkCuda(neuralNetwork, trainingSet, trainingSetSize, trainingSet, trainingSetSize, true);
+		//copyNetrworkCuda(neuralNetwork, trainingSet, trainingSetSize, trainingSet, trainingSetSize, true);
 		//copyClass();
 	}
 	else

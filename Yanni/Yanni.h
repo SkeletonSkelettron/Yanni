@@ -1,9 +1,9 @@
 #pragma once
 #include <iostream>
 #include <thread>
-#include "neuralNetwork.h"
-#include "mnistData.h"
-#include "readMnist.h"
+#include "include/neuralNetwork.h"
+#include "include/mnistData.h"
+#include "include/readMnist.h"
 #include <windows.h>
-#include <cuda.h>
+//#include <cuda.h>
 #include <nlohmann/json.hpp>
