@@ -45,8 +45,8 @@ add_subdirectory(include)
 add_subdirectory(cuda)
 # Add the library Yanni as a target, with the contents of src/ and include/
 # as dependencies.
-add_library(Yanni STATIC ${Yanni_SRC} ${Yanni_INC})
-add_executable(YanniExec Yanni.cpp)
+add_library(YanniLib STATIC ${Yanni_SRC} ${Yanni_INC})
+add_executable(Yanni Yanni.cpp)
 # These variables slightly modify the install location to allow for version
 # specific installations.
 set(Yanni_INCLUDE_DEST "include/Yanni-${Yanni_VERSION}")
@@ -64,12 +64,12 @@ set(CUDA_COMPILE_OPTIONS
    )
 
 CUDA_ADD_LIBRARY(YanniCudaLib SHARED ${Yanni_CUDA_INC})
-target_link_libraries(YanniCudaLib ${CUDA_LIBRARIES}  ${CUDA_RUNTIME_LIBRARY})
+target_link_libraries(YanniCudaLib ${CUDA_LIBRARIES} )
 set_target_properties(YanniCudaLib PROPERTIES CUDA_ARCHITECTURES "75")
-# set_target_properties(YanniCudaLib PROPERTIES CUDA_GENERATE_RELOCATABLE_DEVICE_CODE YES)
-# set_target_properties(YanniCudaLib PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS OFF )
-set_target_properties(YanniCudaLib PROPERTIES IMPORTED_IMPLIB "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.5/lib/x64/cuda.lib")
-set_target_properties(YanniCudaLib PROPERTIES IMPORTED_IMPLIB "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.5/lib/x64/cudart.lib")
+ 
+
+set_target_properties(YanniLib PROPERTIES IMPORTED_IMPLIB "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.5/lib/x64/cuda.lib")
+
 # set_target_properties(YanniCudaLib PROPERTIES IMPORTED_IMPLIB "${CUDA_LIBRARIES}/cudart_static.lib")
 # generator expressions are needed for the include directories, since installing headers changes the include path
 # Specify that Yanni requires the files located in the include/ directory at
@@ -84,7 +84,7 @@ set_target_properties(YanniCudaLib PROPERTIES IMPORTED_IMPLIB "C:/Program Files/
 # CMake command handles this. $<BUILD_INTERFACE:...> and
 # $<INSTALL_INTERFACE:...> are macros whose values change depending on if we are
 # simply building the code or if we are installing it. 
-target_include_directories(Yanni PUBLIC
+target_include_directories(YanniLib PUBLIC
    # headers to include when building from source
    $<BUILD_INTERFACE:${Yanni_SOURCE_DIR}/include> 
    $<BUILD_INTERFACE:${Yanni_BINARY_DIR}/include> 
@@ -111,7 +111,7 @@ target_include_directories(Yanni PUBLIC
 # So we are associating Yanni with YanniTargets.
 install(
     # targets to install
-    TARGETS Yanni 
+    TARGETS YanniLib 
     # name of the CMake "export group" containing the targets we want to install
     EXPORT YanniTargets
     # Dynamic, static library and include destination locations after running
@@ -164,8 +164,7 @@ install(
     DESTINATION ${Yanni_LIB_DEST}
     )
 
-target_link_libraries(YanniExec YanniCudaLib)
-target_link_libraries(YanniExec Yanni) 
+target_link_libraries(Yanni YanniCudaLib)
+target_link_libraries(Yanni YanniLib) 
 
-
-cmake_print_variables(CUDA_LIBRARIES)
+cmake_print_variables(CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES)
