@@ -2,7 +2,7 @@
 # CMakeLists.txt. This is so that a user can clearly understand the reason the 
 # build will fail before the build actually occurs, instead of searching for the
 # CMake function that was used that is causing the failure.
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.14)
 
 # Set the global package-wide C++ standard. This will be inherited by all
 # targets specified in the project. One can also specify the C++ standard in a
@@ -10,17 +10,18 @@ cmake_minimum_required(VERSION 3.1)
 #   set_target_properties(foo PROPERTIES CXX_STANDARD 11)
 #   target_compile_features(foo PUBLIC cxx_std_14)
 # together.
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 # Set the project name and version number. This allows for a user of your
 # library or tool to specify a particular version when they include it, as in 
 #   find_package(Yanni 1.0 REQUIRED)
-project(Yanni VERSION 1.0 LANGUAGES CXX CUDA)
+project(Yanni VERSION 1.0 LANGUAGES CUDA CXX)
 set(Yanni_VERSION 1.0)
 find_package(CUDA REQUIRED)
 enable_language(CUDA)
 set(CUDA_SEPARABLE_COMPILATION ON)
- 
+include(CMakePrintHelpers)
+
 # Function to prepend the subdirectory to source files in subdirectories
 FUNCTION(PREPEND var )
    SET(listVar "")
@@ -51,10 +52,25 @@ add_executable(YanniExec Yanni.cpp)
 set(Yanni_INCLUDE_DEST "include/Yanni-${Yanni_VERSION}")
 set(Yanni_LIB_DEST "lib/Yanni-${Yanni_VERSION}")
 
-CUDA_ADD_LIBRARY(yanniCudaLib SHARED ${Yanni_CUDA_INC})
-set_target_properties(yanniCudaLib PROPERTIES CUDA_ARCHITECTURES "75")
-target_link_libraries(yanniCudaLib ${CUDA_LIBRARIES})
+set(CUDA_COMPILE_OPTIONS 
+    -rdc=true
+    -cudart=static
+    --machine=64
+    -G
+    --ptxas-options=-v
+    -g
+    --compile
+    --compile
+   )
 
+CUDA_ADD_LIBRARY(YanniCudaLib SHARED ${Yanni_CUDA_INC})
+target_link_libraries(YanniCudaLib ${CUDA_LIBRARIES}  ${CUDA_RUNTIME_LIBRARY})
+set_target_properties(YanniCudaLib PROPERTIES CUDA_ARCHITECTURES "75")
+# set_target_properties(YanniCudaLib PROPERTIES CUDA_GENERATE_RELOCATABLE_DEVICE_CODE YES)
+# set_target_properties(YanniCudaLib PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS OFF )
+set_target_properties(YanniCudaLib PROPERTIES IMPORTED_IMPLIB "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.5/lib/x64/cuda.lib")
+set_target_properties(YanniCudaLib PROPERTIES IMPORTED_IMPLIB "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.5/lib/x64/cudart.lib")
+# set_target_properties(YanniCudaLib PROPERTIES IMPORTED_IMPLIB "${CUDA_LIBRARIES}/cudart_static.lib")
 # generator expressions are needed for the include directories, since installing headers changes the include path
 # Specify that Yanni requires the files located in the include/ directory at
 # compile time. This would normally look like 
@@ -148,5 +164,8 @@ install(
     DESTINATION ${Yanni_LIB_DEST}
     )
 
-target_link_libraries(YanniExec Yanni)
-target_link_libraries(YanniExec yanniCudaLib)
+target_link_libraries(YanniExec YanniCudaLib)
+target_link_libraries(YanniExec Yanni) 
+
+
+cmake_print_variables(CUDA_LIBRARIES)
