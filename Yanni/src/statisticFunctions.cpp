@@ -1,5 +1,5 @@
 #include <math.h>
-#include "statisticFunctions.h"
+#include "../include/statisticFunctions.h"
 using namespace std;
 
 float Mean(float* x, int size)

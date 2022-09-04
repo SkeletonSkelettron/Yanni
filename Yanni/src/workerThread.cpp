@@ -1,4 +1,4 @@
-#include "workerThread.h"
+#include "../include/workerThread.h"
 
 WorkerThread::WorkerThread() :isRunning(false)
 {

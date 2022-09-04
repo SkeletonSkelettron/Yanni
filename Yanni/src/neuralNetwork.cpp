@@ -1,5 +1,5 @@
-﻿#include "NeuralNetwork.h"
-#include "statisticFunctions.h"
+﻿#include "../include/NeuralNetwork.h"
+#include "../include/statisticFunctions.h"
 #include <math.h>
 #include <algorithm>
 

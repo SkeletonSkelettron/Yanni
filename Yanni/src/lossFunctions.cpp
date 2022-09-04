@@ -1,5 +1,5 @@
-﻿#include "lossFunctions.h"
-#include "enums.h"
+﻿#include "../include/lossFunctions.h"
+#include "../include/enums.h"
 #include <vector>
 #include <math.h>
 #include <cmath>

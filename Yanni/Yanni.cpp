@@ -1,20 +1,19 @@
 ﻿#include "Yanni.h"
 
-
 using namespace std;
 
-//void copyNetrworkCuda(NeuralNetwork& nn, MnistData* trainingSet, int trainingSetSize, MnistData* testSet, int testSetSize, bool notTesting);
+void copyNetrworkCuda(NeuralNetwork &nn, MnistData *trainingSet, int trainingSetSize, MnistData *testSet, int testSetSize, bool notTesting);
 void testNet()
 {
-	float* ar = new float[4];
-	//bias test case
+	float *ar = new float[4];
+	// bias test case
 	NeuralNetwork neuralNetwork;
 	ar[0] = 1.0f;
 	ar[1] = 0.9f;
 	ar[2] = 0.4f;
 	ar[3] = 0.7f;
 	std::vector<float> labels;
-	float* targetArray;
+	float *targetArray;
 	std::vector<double> losses;
 	targetArray = new float[2];
 	targetArray[0] = 1.0f;
@@ -23,7 +22,7 @@ void testNet()
 	Layer layerHidden1(4, NeuralEnums::LayerType::HiddenLayer, NeuralEnums::ActivationFunction::Sigmoid, 1, 0);
 	Layer layerHidden2(3, NeuralEnums::LayerType::HiddenLayer, NeuralEnums::ActivationFunction::Sigmoid, 1, 0);
 	Layer layerOutput(2, NeuralEnums::LayerType::OutputLayer, NeuralEnums::ActivationFunction::Sigmoid, 0, 0);
-	Layer* vecs;
+	Layer *vecs;
 	vecs = new Layer[4];
 	layerInput.WeightsSize = 1;
 	layerInput.Weights = new float[1];
@@ -42,8 +41,8 @@ void testNet()
 	neuralNetwork.LossFunctionType = NeuralEnums::LossFunctionType::MeanSquaredError;
 	neuralNetwork.LossCalculation = NeuralEnums::LossCalculation::Full;
 	neuralNetwork.LayersSize = 4;
-	//neuralNetwork.Layers[1].GradientsBatch.resize(1);
-	//neuralNetwork.Layers[1].GradientsBatch[0].resize(12);
+	// neuralNetwork.Layers[1].GradientsBatch.resize(1);
+	// neuralNetwork.Layers[1].GradientsBatch[0].resize(12);
 	neuralNetwork.Layers[1].Gradients = new float[12];
 	neuralNetwork.Layers[1].Weights = new float[12];
 	neuralNetwork.Layers[1].TempWeights = new float[12];
@@ -62,7 +61,7 @@ void testNet()
 	neuralNetwork.Layers[1].Weights[11] = 0.16f;
 
 	// neuralNetwork.Layers[2].GradientsBatch.resize(1);
-	//neuralNetwork.Layers[2].GradientsBatch[0].resize(8);
+	// neuralNetwork.Layers[2].GradientsBatch[0].resize(8);
 	neuralNetwork.Layers[2].Gradients = new float[8];
 	neuralNetwork.Layers[2].Weights = new float[8];
 	neuralNetwork.Layers[2].TempWeights = new float[8];
@@ -77,7 +76,7 @@ void testNet()
 	neuralNetwork.Layers[2].Weights[7] = 0.76f;
 
 	// neuralNetwork.Layers[3].GradientsBatch.resize(1);
-	//neuralNetwork.Layers[3].GradientsBatch[0].resize(6);
+	// neuralNetwork.Layers[3].GradientsBatch[0].resize(6);
 	neuralNetwork.Layers[3].Gradients = new float[6];
 	neuralNetwork.Layers[3].Weights = new float[6];
 	neuralNetwork.Layers[3].TempWeights = new float[6];
@@ -94,7 +93,7 @@ void testNet()
 	neuralNetwork.Layers[0].Outputs = ar;
 	neuralNetwork.NeuralNetworkInit();
 
-	MnistData* trainingSet;
+	MnistData *trainingSet;
 	trainingSet = new MnistData[1];
 	trainingSet[0].set = new float[4];
 	trainingSet[0].set[0] = 1.0;
@@ -112,27 +111,27 @@ void testNet()
 	neuralNetwork.Layers[2].WeightsSize = 8;
 	neuralNetwork.Layers[3].WeightsSize = 6;
 
-	//initTrainingAndTestData<double>(neuralNetwork, trainingSet, 1, NULL, 0);
+	// initTrainingAndTestData<double>(neuralNetwork, trainingSet, 1, NULL, 0);
 	neuralNetwork.PrepareForTesting();
 
-	 //copyNetrworkCuda(neuralNetwork, nullptr, 60000, nullptr, 0, false);
+	copyNetrworkCuda(neuralNetwork, nullptr, 60000, nullptr, 0, false);
 	for (size_t i = 0; i < 100; i++)
 	{
 		auto loss = neuralNetwork.PropagateForwardThreaded(true, false); // პირველი loss უნდა იყოს 0.20739494219121993   float ზე 0.414789855
 		neuralNetwork.PropagateBackThreaded();
 
-		//1.0002170802724326
-		//0.60019537224518926
-		//0.70008683210897293
+		// 1.0002170802724326
+		// 0.60019537224518926
+		// 0.70008683210897293
 		//- 0.39984804380929723
-		//0.99984718866787936
+		// 0.99984718866787936
 		//- 0.80013753019890865
-		//0.39993887546715173
-		//0.099893032067515528
-		//0.99955724383635436
-		//0.22960151945271889
-		//0.16982289753454174
-		//0.15969007068544802
+		// 0.39993887546715173
+		// 0.099893032067515528
+		// 0.99955724383635436
+		// 0.22960151945271889
+		// 0.16982289753454174
+		// 0.15969007068544802
 		//	1.00021708
 		//	0.600195408
 		//	0.700086832
@@ -149,7 +148,7 @@ void testNet()
 		losses.push_back(loss);
 	}
 }
-void initNeUnetFromJson(NeuralNetwork& neuralNetwork)
+void initNeUnetFromJson(NeuralNetwork &neuralNetwork)
 {
 	char result[MAX_PATH]{};
 	auto rslt = std::string(result, GetModuleFileNameA(NULL, result, MAX_PATH));
@@ -161,7 +160,7 @@ void initNeUnetFromJson(NeuralNetwork& neuralNetwork)
 		return;
 
 	std::string content((std::istreambuf_iterator<char>(ifs)),
-		(std::istreambuf_iterator<char>()));
+						(std::istreambuf_iterator<char>()));
 	nlohmann::json json = nlohmann::json::parse(content);
 
 	neuralNetwork.ThreadCount = (size_t)json["ThreadCount"];
@@ -256,7 +255,7 @@ void initNeUnetFromJson(NeuralNetwork& neuralNetwork)
 	neuralNetwork.Layers = new Layer[json["Layers"].size()];
 	size_t counter = 0;
 	neuralNetwork.LayersSize = json["Layers"].size();
-	for (auto& layer : json["Layers"])
+	for (auto &layer : json["Layers"])
 	{
 		NeuralEnums::LayerType LayerType;
 		NeuralEnums::ActivationFunction ActivationFunctionType;
@@ -303,7 +302,7 @@ void initNeUnetFromJson(NeuralNetwork& neuralNetwork)
 	neuralNetwork.NeuralNetworkInit();
 	neuralNetwork.InitializeWeights();
 }
-void ReadData(std::vector<std::vector<float>>& trainingSet, std::vector<std::vector<float>>& testSet, std::vector<std::vector<float>>& labels, std::vector<std::vector<float>>& testLabels)
+void ReadData(std::vector<std::vector<float>> &trainingSet, std::vector<std::vector<float>> &testSet, std::vector<std::vector<float>> &labels, std::vector<std::vector<float>> &testLabels)
 {
 
 	std::vector<int> _labels;
@@ -335,10 +334,10 @@ void ReadData(std::vector<std::vector<float>>& trainingSet, std::vector<std::vec
 void readDataAndTest()
 {
 
-	//copyClass<float>();
+	// copyClass<float>();
 	NeuralNetwork neuralNetwork;
-	MnistData* trainingSet;
-	MnistData* testSet;
+	MnistData *trainingSet;
+	MnistData *testSet;
 	std::vector<float> losses;
 
 	initNeUnetFromJson(neuralNetwork);
@@ -353,7 +352,7 @@ void readDataAndTest()
 	std::vector<std::vector<float>> labeledTarget;
 	std::vector<std::vector<float>> testLabeledTarget;
 	ReadData(_trainingSet, _testSet, labeledTarget, testLabeledTarget);
-	
+
 	trainingSet = new MnistData[_trainingSet.size()];
 	std::vector<int> index;
 	index.resize(_trainingSet.size());
@@ -390,13 +389,13 @@ void readDataAndTest()
 		int deviceCount = 0;
 		int cudaDevice = 0;
 		char cudaDeviceName[100];
-		// cuInit(0);
-		// cuDeviceGetCount(&deviceCount);
-		// cuDeviceGet(&cudaDevice, 0);
-		// cuDeviceGetName(cudaDeviceName, 100, cudaDevice);
+		cuInit(0);
+		cuDeviceGetCount(&deviceCount);
+		cuDeviceGet(&cudaDevice, 0);
+		cuDeviceGetName(cudaDeviceName, 100, cudaDevice);
 		cout << "found CUDA device: " + std::string(cudaDeviceName) + ". Count: " + std::to_string(deviceCount) << endl;
-		//copyNetrworkCuda(neuralNetwork, trainingSet, trainingSetSize, trainingSet, trainingSetSize, true);
-		//copyClass();
+		copyNetrworkCuda(neuralNetwork, trainingSet, trainingSetSize, trainingSet, trainingSetSize, true);
+		// copyClass();
 	}
 	else
 	{
@@ -485,9 +484,9 @@ void readDataAndTest()
 							}
 						}
 
-						//main learning sequence
+						// main learning sequence
 						neuralNetwork.PropagateForwardThreaded(true, true);
-						//losses.push_back(loss);
+						// losses.push_back(loss);
 						if (neuralNetwork.BatchSize == 1)
 						{
 							if (i % 1000 == 0 && i != 0)
@@ -505,13 +504,13 @@ void readDataAndTest()
 						}
 					}
 					//// rohat average
-					//for (size_t l = 1; l < neuralNetwork.Layers.size(); l++)
+					// for (size_t l = 1; l < neuralNetwork.Layers.size(); l++)
 					//{
 					//	for (size_t f = 0; f < neuralNetwork.Layers[l].RoHat.size(); f++)
 					//	{
 					//		neuralNetwork.Layers[l].RoHat[f] /= total;
 					//	}
-					//}
+					// }
 				}
 				clock_t endInside = clock();
 
@@ -588,7 +587,7 @@ void readDataAndTest()
 int main()
 {
 	std::thread test(readDataAndTest);
-	//std::thread test(testNet);
+	// std::thread test(testNet);
 	test.join();
 	return 0;
 }

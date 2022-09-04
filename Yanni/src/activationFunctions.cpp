@@ -1,9 +1,9 @@
-﻿#include "ActivationFunctions.h"
+﻿#include "../include/ActivationFunctions.h"
 #include <vector>
 #include <math.h>
 #include <cmath>
-#include "enums.h"
-#include "statisticfunctions.h" 
+#include "../include/enums.h"
+#include "../include/statisticfunctions.h" 
 #include <stdexcept>
 
 const long double PI2 = 6.283185307179586476L;

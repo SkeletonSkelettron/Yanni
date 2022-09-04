@@ -2,7 +2,7 @@
 #define LOSSFUNCTIONSCUDA_H
 #include "cuda.h"
 #include "cuda_runtime.h"
-#include "enums.h"
+#include "../include/enums.h"
 
 __device__ float  KullbackLeiblerDivergenceCuda(float* roHat, float& ro, int start, int end);
 

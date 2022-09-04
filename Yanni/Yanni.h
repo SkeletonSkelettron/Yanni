@@ -5,5 +5,5 @@
 #include "include/mnistData.h"
 #include "include/readMnist.h"
 #include <windows.h>
-//#include <cuda.h>
+#include <cuda.h>
 #include <nlohmann/json.hpp>

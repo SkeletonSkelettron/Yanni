@@ -1,5 +1,5 @@
 ﻿#include "LossFunctionsCuda.cuh"
-#include "enums.h"
+#include "../include/enums.h"
 #include <vector>
 #include <math.h>
 #include <cmath>

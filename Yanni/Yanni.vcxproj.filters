@@ -18,94 +18,65 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Yanni.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="activationFunctions.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="layer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="learningRateFunctions.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="lossFunctions.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="neuralNetwork.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="readMnist.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="statisticFunctions.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="workerThread.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="activationFunctions.h">
+    <ClInclude Include="include\activationFunctions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="enums.h">
+    <ClInclude Include="include\enums.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="gradientFunctions.h">
+    <ClInclude Include="include\gradientFunctions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="layer.h">
+    <ClInclude Include="include\layer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="learningRateFunctions.h">
+    <ClInclude Include="include\learningRateFunctions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="lossFunctions.h">
+    <ClInclude Include="include\lossFunctions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="mnistData.h">
+    <ClInclude Include="include\mnistData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="neuralNetwork.h">
+    <ClInclude Include="include\neuralNetwork.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="readMnist.h">
+    <ClInclude Include="include\readMnist.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="statisticFunctions.h">
+    <ClInclude Include="include\statisticFunctions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="workerThread.h">
+    <ClInclude Include="include\workerThread.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cuda\activationFunctionsCuda.cuh">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="cuda\enumsCuda.cuh">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="cuda\gradientFunctionsCuda.cuh">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="cuda\layerCuda.cuh">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="cuda\learningRateFunctionsCuda.cuh">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="cuda\lossFunctionsCuda.cuh">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="cuda\neuralNetworkCuda.cuh">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="cuda\statisticFunctionsCuda.cuh">
+      <Filter>Cuda</Filter>
     </ClInclude>
     <ClInclude Include="Yanni.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="activationFunctionsCuda.cuh">
-      <Filter>Cuda</Filter>
-    </ClInclude>
-    <ClInclude Include="enumsCuda.cuh">
-      <Filter>Cuda</Filter>
-    </ClInclude>
-    <ClInclude Include="gradientFunctionsCuda.cuh">
-      <Filter>Cuda</Filter>
-    </ClInclude>
-    <ClInclude Include="layerCuda.cuh">
-      <Filter>Cuda</Filter>
-    </ClInclude>
-    <ClInclude Include="learningRateFunctionsCuda.cuh">
-      <Filter>Cuda</Filter>
-    </ClInclude>
-    <ClInclude Include="lossFunctionsCuda.cuh">
-      <Filter>Cuda</Filter>
-    </ClInclude>
-    <ClInclude Include="neuralNetworkCuda.cuh">
-      <Filter>Cuda</Filter>
-    </ClInclude>
-    <ClInclude Include="statisticFunctionsCuda.cuh">
-      <Filter>Cuda</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -114,16 +85,51 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="activationFunctionsCuda.cu">
+    <Text Include="src\CMakeLists.txt" />
+    <Text Include="include\CMakeLists.txt">
+      <Filter>Header Files</Filter>
+    </Text>
+    <Text Include="cuda\CMakeLists.txt">
+      <Filter>Cuda</Filter>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\activationFunctions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\layer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\learningRateFunctions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lossFunctions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\neuralNetwork.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\readMnist.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\statisticFunctions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\workerThread.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Yanni.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="cuda\activationFunctionsCuda.cu">
       <Filter>Cuda</Filter>
     </CudaCompile>
-    <CudaCompile Include="lossFunctionsCuda.cu">
+    <CudaCompile Include="cuda\lossFunctionsCuda.cu">
       <Filter>Cuda</Filter>
     </CudaCompile>
-    <CudaCompile Include="neuNetCuda.cu">
-      <Filter>Cuda</Filter>
-    </CudaCompile>
-    <CudaCompile Include="ramdom.cu">
+    <CudaCompile Include="cuda\neuNetCuda.cu">
       <Filter>Cuda</Filter>
     </CudaCompile>
   </ItemGroup>

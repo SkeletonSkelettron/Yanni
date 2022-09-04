@@ -3,12 +3,11 @@
 #include "device_launch_parameters.h"
 #include <stdio.h>
 #include <conio.h>
-#include "Enums.h"
+#include "../include/enums.h"
 #include "NeuralNetworkCuda.cuh"
-#include "NeuralNetwork.h"
-#include "NeuralNetwork.h"
-#include "Layer.h"
-#include "MnistData.h"
+#include "../include/NeuralNetwork.h"
+#include "../include/Layer.h"
+#include "../include/MnistData.h"
 #include <iostream>
 #include <sstream>
 

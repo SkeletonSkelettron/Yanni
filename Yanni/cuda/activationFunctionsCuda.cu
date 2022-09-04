@@ -2,14 +2,13 @@
 #include <vector>
 #include <math.h>
 #include <cmath>
-#include "enums.h"
+#include "../include/enums.h"
 //#include "statisticfunctions.h" 
 #include <stdexcept>
 #include "activationFunctionsCuda.cuh"
 #include <vector>
 #include <math.h>
-#include <cmath>
-#include "enums.h"
+#include <cmath> 
 #include <stdexcept>
 
 void ActivateWithCuda(

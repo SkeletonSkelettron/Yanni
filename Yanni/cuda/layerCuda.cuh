@@ -1,6 +1,6 @@
 ﻿#ifndef LAYERCUDA_H
 #define LAYERCUDA_H
-#include "enums.h"
+#include "../include/enums.h"
 #include "ActivationFunctionsCuda.cuh"
 __device__ struct LayerCuda
 {

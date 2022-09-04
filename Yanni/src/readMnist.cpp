@@ -1,4 +1,4 @@
-#include "readMnist.h"
+#include "../include/readMnist.h"
 #include <string>
 #include <cuchar>
 #include <fstream>

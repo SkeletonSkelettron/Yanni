@@ -1,7 +1,7 @@
 ﻿#ifndef ACTIVATIONFUNCTIONSCUDA_H
 #define ACTIVATIONFUNCTIONSCUDA_H
 #include <cmath>
-#include "enums.h"
+#include "../include/enums.h"
 #include "cuda.h"
 #include "cuda_runtime.h"
 
