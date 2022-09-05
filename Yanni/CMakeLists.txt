@@ -165,6 +165,6 @@ install(
     )
 
 target_link_libraries(Yanni YanniCudaLib)
-target_link_libraries(Yanni YanniLib) 
-
+target_link_libraries(Yanni YanniLib)
+TARGET_LINK_LIBRARIES(Yanni cuda.lib)
 cmake_print_variables(CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES)
