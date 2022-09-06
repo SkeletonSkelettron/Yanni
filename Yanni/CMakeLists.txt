@@ -46,7 +46,7 @@ add_subdirectory(cuda)
 # Add the library Yanni as a target, with the contents of src/ and include/
 # as dependencies.
 add_library(YanniLib STATIC ${Yanni_SRC} ${Yanni_INC})
-add_executable(Yanni Yanni.cpp)
+add_executable(Yanni Yanni.cpp Yanni.h)
 # These variables slightly modify the install location to allow for version
 # specific installations.
 set(Yanni_INCLUDE_DEST "include/Yanni-${Yanni_VERSION}")
@@ -63,7 +63,7 @@ set(CUDA_COMPILE_OPTIONS
     --compile
    )
 
-CUDA_ADD_LIBRARY(YanniCudaLib SHARED ${Yanni_CUDA_INC})
+CUDA_ADD_LIBRARY(YanniCudaLib STATIC ${Yanni_CUDA_INC})
 target_link_libraries(YanniCudaLib ${CUDA_LIBRARIES} )
 set_target_properties(YanniCudaLib PROPERTIES CUDA_ARCHITECTURES "75")
  

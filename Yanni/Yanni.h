@@ -6,4 +6,5 @@
 #include "include/readMnist.h"
 #include <windows.h>
 #include <cuda.h>
+#include "cuda/neuNetCuda.h"
 #include <nlohmann/json.hpp>

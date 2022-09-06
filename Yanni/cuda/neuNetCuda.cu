@@ -188,7 +188,7 @@ __global__ void backPropCalcGradients(int layerIdx, int batchCount, int maxinput
 }
 
 
-void copyNetrworkCuda(NeuralNetwork& nn, MnistData* trainingSet, int trainingSetSize, MnistData* testSet, int testSetSize, bool notTesting)
+extern "C" void copyNetrworkCuda(NeuralNetwork& nn, MnistData* trainingSet, int trainingSetSize, MnistData* testSet, int testSetSize, bool notTesting)
 {
 	NeuralNetworkCuda* d_neuralNetwork;
 	NeuralNetworkCuda neuNetCuda;
