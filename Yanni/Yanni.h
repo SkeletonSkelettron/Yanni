@@ -2,8 +2,8 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <thread>
-#include "neuralNetwork.h"
-#include "mnistData.h"
-#include "readMnist.h"
+#include "core/neuralNetwork.h"
+#include "data/mnistData.h"
+#include "data/readMnist.h"
 #include <cuda.h>
 #include <windows.h>

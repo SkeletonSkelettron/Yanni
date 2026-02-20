@@ -9,12 +9,12 @@
 #include <thread>
 #include <condition_variable>
 #include "enums.h"
-#include "activationFunctions.h"
+#include "../functions/activationFunctions.h"
 #include "workerThread.h"
 #include "layer.h"
-#include "learningRateFunctions.h"
-#include "gradientFunctions.h"
-#include "lossFunctions.h"
+#include "../functions/learningRateFunctions.h"
+#include "../functions/gradientFunctions.h"
+#include "../functions/lossFunctions.h"
 //https://stackoverflow.com/questions/16350473/why-do-i-need-stdcondition-variable
 
 

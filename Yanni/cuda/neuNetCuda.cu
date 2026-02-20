@@ -3,11 +3,11 @@
 #include "device_launch_parameters.h"
 #include <stdio.h>
 #include <conio.h>
-#include "enums.h"
+#include "../core/enums.h"
 #include "neuralNetworkCuda.cuh"
-#include "neuralNetwork.h"
-#include "layer.h"
-#include "mnistData.h"
+#include "../core/neuralNetwork.h"
+#include "../core/layer.h"
+#include "../data/mnistData.h"
 #include <iostream>
 #define ERRCHECK(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 

@@ -1,5 +1,5 @@
-﻿#include "Layer.h"
-#include "activationFunctions.h"
+﻿#include "layer.h"
+#include "../functions/activationFunctions.h"
 #include <cstddef>
 
 Layer::Layer(int size, NeuralEnums::LayerType layerType, NeuralEnums::ActivationFunction activationFunction, float bias, float dropoutSize, int batchSize)

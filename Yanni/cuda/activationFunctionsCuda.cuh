@@ -1,7 +1,7 @@
 ﻿#ifndef ACTIVATIONFUNCTIONSCUDA_H
 #define ACTIVATIONFUNCTIONSCUDA_H
 #include <cmath>
-#include "enums.h"
+#include "../core/enums.h"
 #include "cuda.h"
 #include "cuda_runtime.h"
 //void BalanceWith(std::vector <float>& dataset, NeuralEnums::BalanceType BalancingMethod)

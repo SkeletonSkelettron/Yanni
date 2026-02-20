@@ -3,8 +3,8 @@
 #include <vector>
 #include <math.h>
 #include <cmath>
-#include "enums.h"
-#include "statisticfunctions.h" 
+#include "../core/enums.h"
+#include "statisticFunctions.h" 
 
 
 //void BalanceWith(std::vector <float>& dataset, NeuralEnums::BalanceType BalancingMethod)

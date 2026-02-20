@@ -1,7 +1,7 @@
 ﻿#ifndef LAYER_H
 #define LAYER_H
-#include "Enums.h"
-#include "WorkerThread.h"
+#include "enums.h"
+#include "workerThread.h"
 #include <vector>
 class Layer
 {

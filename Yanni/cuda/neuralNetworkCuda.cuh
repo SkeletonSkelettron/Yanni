@@ -3,7 +3,7 @@
 #include <math.h>
 #include <string>
 #include <condition_variable>
-#include "enums.h"
+#include "../core/enums.h"
 #include "layerCuda.cuh"
 #include "activationFunctionsCuda.cuh"
 #include "lossFunctionsCuda.cuh"

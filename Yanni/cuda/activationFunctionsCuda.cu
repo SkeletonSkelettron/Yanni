@@ -2,7 +2,7 @@
 #include <vector>
 #include <math.h>
 #include <cmath>
-#include "enums.h"
+#include "../core/enums.h"
 //#include "statisticfunctions.h" 
 #include <stdexcept>
 	//void BalanceWith(std::vector <float>& dataset, NeuralEnums::BalanceType BalancingMethod)

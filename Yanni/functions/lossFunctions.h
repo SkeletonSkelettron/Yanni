@@ -1,7 +1,7 @@
 ﻿#ifndef LOSSFUNCTIONS_H
 #define LOSSFUNCTIONS_H
 
-#include "enums.h"
+#include "../core/enums.h"
 #include <math.h>
 #include <cmath>
 
