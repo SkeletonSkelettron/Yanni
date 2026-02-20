@@ -5,6 +5,7 @@
 #include <list>
 #include <mutex>
 #include <memory>
+#include <atomic>
 #include <condition_variable>
 
 class WorkerThread
@@ -21,11 +22,12 @@ public:
 private:
 	void startThread();
 private:
-	std::condition_variable itemInQueue;
+	std::condition_variable cv;
 	std::mutex mutex;
 	std::unique_ptr<std::thread> thread;
 	std::function<void()> task;
-	volatile bool isRunning;
+	std::atomic<bool> isRunning;
+	bool hasTask;
 };
 
 #endif // WORKERTHREAD_H

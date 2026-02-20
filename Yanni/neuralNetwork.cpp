@@ -80,42 +80,55 @@ void NeuralNetwork::InitializeWeights()
 		Layers[i].WeightsSize = size;
 		Layers[i].MultipliedSums = new float[size] {0};
 
-		//for (int j = 0; j < size; j++)
-		//{
-		//	Layers[i].Weights[j] = Layers[i].UsingBias && j % Layers[i - 1].Size == 0
-		//		? 1.0
-		//		: rand() % 100;
-		//}
-		//if (Layers[i].ActivationFunction == NeuralEnums::ActivationFunction::Sigmoid)
-		//{
-		//	int tmp[2];
-		//	float start = -1.0;
-		//	float end = 1.0;
-		//	StandartizeLinearContract(Layers[i].Weights, size, tmp, start, end);
-		//}
-		//else
-		//{
-		//	int tmp[2];
-		//	float start = -0.07;
-		//	float end = 0.07;
-		//	StandartizeLinearContract(Layers[i].Weights, size, tmp, start, end);
-		//}
-		//if (Layers[i - 1].UsingBias)
-		//	for (int j = 0; j < size; j++)
-		//	{
-		//		if (j % Layers[i - 1].Size == 0)
-		//			Layers[i].Weights[j] = 1L;
-		//	}
-		//std::ofstream oData;
-		//oData.open("weights" + std::to_string(i) + ".txt");
-		//for (int count = 0; count < size; count++) {
-		//	oData << std::setprecision(100) << Layers[i].Weights[count] << std::endl;
-		//}
-
+		// Try loading weights from file (for reproducibility/comparison)
 		std::ifstream inData;
 		inData.open("weights" + std::to_string(i) + ".txt");
-		for (int count = 0; count < Layers[i - 1].Size * (Layers[i].Size - (Layers[i].UsingBias ? 1 : 0)); count++) {
-			inData >> std::setprecision(100) >> Layers[i].Weights[count];
+		if (inData.is_open())
+		{
+			for (int count = 0; count < size; count++) {
+				inData >> std::setprecision(100) >> Layers[i].Weights[count];
+			}
+		}
+		else
+		{
+			// Initialize based on activation function:
+			//   He   (ReLU, MReLU, GeLU):       N(0, sqrt(2 / fan_in))
+			//   Xavier (Sigmoid, Tanh, SoftSign, SoftPlus): U(-sqrt(6 / (fan_in + fan_out)), sqrt(6 / (fan_in + fan_out)))
+			int fan_in = Layers[i - 1].Size;
+			int fan_out = Layers[i].Size - (Layers[i].UsingBias ? 1 : 0);
+			int biasShift = Layers[i].UsingBias ? 1 : 0;
+
+			std::mt19937 gen(42 + i); // deterministic seed per layer for reproducibility
+
+			if (Layers[i].ActivationFunction == NeuralEnums::ActivationFunction::ReLU ||
+				Layers[i].ActivationFunction == NeuralEnums::ActivationFunction::MReLU ||
+				Layers[i].ActivationFunction == NeuralEnums::ActivationFunction::GeLU)
+			{
+				// He initialization: W ~ N(0, sqrt(2/fan_in))
+				float stddev = sqrt(2.0f / fan_in);
+				std::normal_distribution<float> dist(0.0f, stddev);
+				for (int j = 0; j < size; j++)
+				{
+					// Bias weights (column 0 in each neuron's row) initialized to 0
+					if (Layers[i - 1].UsingBias && j % fan_in == 0)
+						Layers[i].Weights[j] = 0.0f;
+					else
+						Layers[i].Weights[j] = dist(gen);
+				}
+			}
+			else
+			{
+				// Xavier/Glorot initialization: W ~ U(-limit, limit)
+				float limit = sqrt(6.0f / (fan_in + fan_out));
+				std::uniform_real_distribution<float> dist(-limit, limit);
+				for (int j = 0; j < size; j++)
+				{
+					if (Layers[i - 1].UsingBias && j % fan_in == 0)
+						Layers[i].Weights[j] = 0.0f;
+					else
+						Layers[i].Weights[j] = dist(gen);
+				}
+			}
 		}
 	}
 }
@@ -595,6 +608,21 @@ void NeuralNetwork::CalculateLossSub(int start, int end, int klbstart, int  klbe
 	loss = result + klbResult;
 }
 
+void NeuralNetwork::CalculateLossSub_2(int start, int end, int klbstart, int klbend, float& loss)
+{
+	float result = 0.0;
+	float klbResult = 0.0;
+
+	// CalculateLossFunction already sums over [start, end), so no outer loop needed
+	result = CalculateLossFunction(LossFunctionType, Layers[LayersSize - 1].Outputs, Layers[LayersSize - 1].Target, start, end, Layers[LayersSize - 1].Size);
+
+	if (Type == NeuralEnums::NetworkType::AutoEncoder && AutoEncoderType == NeuralEnums::AutoEncoderType::Sparce)
+	{
+		klbResult += KullbackLeiblerDivergence(Layers[1].RoHat, ro, klbstart, klbend);
+	}
+	loss = result + klbResult;
+}
+
 
 
 float NeuralNetwork::GetLearningRateMultipliedByGrad(float& gradient, int& iterator, int& j)
@@ -655,8 +683,9 @@ float NeuralNetwork::Adam(float& gradient, int& j, int& iterator)
 	//vt
 	Layers[iterator].GradientsLR[j] = beta2 * Layers[iterator].GradientsLR[j] + (1 - beta2) * gradient * gradient;
 
-
-	return (LearningRate * Layers[iterator].Parameters[j]) / ((1 - beta1Pow) * (sqrt(Layers[iterator].GradientsLR[j] / (1 - beta2Pow)) + epsilon));
+	// bias-corrected estimates: mHat = m/(1-beta1^t), vHat = v/(1-beta2^t)
+	// standard Adam: lr * mHat / (sqrt(vHat) + epsilon)
+	return (LearningRate * Layers[iterator].Parameters[j]) / ((1 - beta1Pow) * sqrt(Layers[iterator].GradientsLR[j] / (1 - beta2Pow)) + epsilon);
 }
 
 float NeuralNetwork::AdaGrad(float* gradients, float& gradient, int& j)
@@ -684,7 +713,7 @@ float NeuralNetwork::AdamMod(float& Gradient, int& j, int& iterator)
 	Layers[iterator].GradientsLR[j] = momentum * Layers[iterator].GradientsLR[j] + prelim * Gradient;
 	Layers[iterator].Parameters[j] = momentum * Layers[iterator].Parameters[j] + prelim;
 
-	return (LearningRate * Layers[iterator].Parameters[j] / (1 - beta1)) / (sqrt(Layers[iterator].GradientsLR[j] / (1 - beta2)) + epsilon);
+	return (LearningRate * Layers[iterator].Parameters[j] / (1 - beta1Pow)) / (sqrt(Layers[iterator].GradientsLR[j] / (1 - beta2Pow)) + epsilon);
 }
 
 

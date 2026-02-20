@@ -83,7 +83,7 @@ float DifferentiateLossWith(float& output, float& target, NeuralEnums::LossFunct
 {
 	switch (function)
 	{
-	case NeuralEnums::LossFunctionType::MeanSquaredError: return output - target;
+	case NeuralEnums::LossFunctionType::MeanSquaredError: return (output - target) / size;
 	case NeuralEnums::LossFunctionType::BinaryCrossentropy: return BinaryCrossentropyDerivative(output, target, size);
 	case NeuralEnums::LossFunctionType::KullbackLeiblerDivergence: return KullbackLeiblerDivergenceDerivative(output, target);
 	default:

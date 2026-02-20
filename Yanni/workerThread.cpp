@@ -1,10 +1,9 @@
 #include "workerThread.h"
 
-WorkerThread::WorkerThread() :isRunning(false)
+WorkerThread::WorkerThread() : isRunning(true), hasTask(false)
 {
 	thread.reset(new std::thread([this]
 		{
-			isRunning = true;
 			this->startThread();
 		}));
 }
@@ -17,35 +16,37 @@ WorkerThread::~WorkerThread()
 void WorkerThread::startThread()
 {
 	std::unique_lock<std::mutex> lock(mutex);
-	do
+	while (isRunning)
 	{
-		while (isRunning && task == NULL)
-			itemInQueue.wait(lock);
+		cv.wait(lock, [this] { return hasTask || !isRunning; });
 
+		if (!isRunning)
+			break;
+
+		// Move task locally so doAsync can safely assign next task after we unlock
+		std::function<void()> t = std::move(task);
 		lock.unlock();
-		const std::function<void()> t = task;
-		t();
-		task = NULL;
-		lock.lock();
-		itemInQueue.notify_all();
 
-	} while (isRunning);
-	itemInQueue.notify_all();
+		t();
+
+		lock.lock();
+		hasTask = false;
+		cv.notify_all();
+	}
 }
 
 void WorkerThread::doAsync(const std::function<void()>& t)
 {
-	std::lock_guard<std::mutex> _(mutex);
+	std::lock_guard<std::mutex> lock(mutex);
 	task = t;
-	itemInQueue.notify_one();
-
+	hasTask = true;
+	cv.notify_one();
 }
 
 void WorkerThread::wait()
 {
 	std::unique_lock<std::mutex> lock(mutex);
-	while (task != NULL)
-		itemInQueue.wait(lock);
+	cv.wait(lock, [this] { return !hasTask; });
 }
 
 void WorkerThread::stop()
@@ -53,7 +54,8 @@ void WorkerThread::stop()
 	{
 		std::lock_guard<std::mutex> lock(mutex);
 		isRunning = false;
-		itemInQueue.notify_one();
+		cv.notify_one();
 	}
-	thread->join();
+	if (thread && thread->joinable())
+		thread->join();
 }

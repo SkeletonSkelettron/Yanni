@@ -66,6 +66,7 @@ public:
 	void CalculateWeightsBatchSub(int i, int* prevLayerIndex, int prevLayerIndexSize, int start, int end, bool prevLayerUsingbias);
 	float CalculateLoss(bool& training);
 	void CalculateLossSub(int start, int end, int klbstart, int  klbend, float& loss);
+	void CalculateLossSub_2(int start, int end, int klbstart, int klbend, float& loss);
 	void CalculateLossBatchSub(int start, int end, float& loss);
 
 
