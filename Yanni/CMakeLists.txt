@@ -14,6 +14,6 @@ target_include_directories(cudaYanniLib PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/data
 )
 
-set_target_properties(cudaYanniLib PROPERTIES CUDA_ARCHITECTURES "75")
+set_target_properties(cudaYanniLib PROPERTIES CUDA_ARCHITECTURES "89")
 # set_target_properties(cudaYanniLib PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 # target_link_libraries(cudaYanniLib ${CUDA_LIBRARIES})
