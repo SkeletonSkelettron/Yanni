@@ -1,22 +1,22 @@
-//#include <iostream>
-//#include <Cuda.h>
-//#include<curand.h>
-//#include<curand_kernel.h>
+// #include <iostream>
+// #include <Cuda.h>
+// #include<curand.h>
+// #include<curand_kernel.h>
 //
 //
-//int n = 200;
-//using namespace std;
+// int n = 200;
+// using namespace std;
 //
 //__device__ float generate(curandState* globalState, int ind)
 //{
-//    //int ind = threadIdx.x;
-//    curand_init(1234, ind, 0, &globalState[ind]);
-//    curandState localState = globalState[ind];
-//    
-//    float RANDOM = curand_uniform(&localState);
-//    globalState[ind] = localState;
-//    return RANDOM;
-//}
+//     //int ind = threadIdx.x;
+//     curand_init(1234, ind, 0, &globalState[ind]);
+//     curandState localState = globalState[ind];
+//
+//     float RANDOM = curand_uniform(&localState);
+//     globalState[ind] = localState;
+//     return RANDOM;
+// }
 ////
 ////__global__ void setup_kernel(curandState* state, unsigned long seed)
 ////{
@@ -38,7 +38,7 @@
 //    }
 //}
 //
-//int generateRand()
+// int generateRand()
 //{
 //    int N = 200;
 //

@@ -2,29 +2,32 @@
 #define LOSSFUNCTIONS_H
 
 #include "../core/enums.h"
-#include <math.h>
 #include <cmath>
+#include <math.h>
 
-float  KullbackLeiblerDivergence(float* roHat, float& ro, int start, int end);
+float KullbackLeiblerDivergence(float *roHat, float &ro, int start, int end);
 
-float  KullbackLeiblerDivergenceDerivative(float& output, float& target);
+float KullbackLeiblerDivergenceDerivative(float &output, float &target);
 
-float  BinaryCrossentropy(float* output, float* target, int targetSize);
+float BinaryCrossentropy(float *output, float *target, int targetSize);
 
-float  BinaryCrossentropyDerivative(float& output, float& target, int size);
+float BinaryCrossentropyDerivative(float &output, float &target, int size);
 
-float  _CEL(float& output, float& target);
+float _CEL(float &output, float &target);
 
-float CEL(float* output, float* target, int size);
+float CEL(float *output, float *target, int size);
 
-float MSL(float& output, float& target);
+float MSL(float &output, float &target);
 
-float MSL(float* output, float* target, int start, int end, int outputSize);
+float MSL(float *output, float *target, int start, int end, int outputSize);
 
-float CELDerevative(float& output, float& target);
+float CELDerevative(float &output, float &target);
 
-float CalculateLossFunction(NeuralEnums::LossFunctionType& function, float* output, float* target, int start, int end, int outputSize);
+float CalculateLossFunction(NeuralEnums::LossFunctionType &function,
+                            float *output, float *target, int start, int end,
+                            int outputSize);
 
-float DifferentiateLossWith(float& output, float& target, NeuralEnums::LossFunctionType& function, int size);
+float DifferentiateLossWith(float &output, float &target,
+                            NeuralEnums::LossFunctionType &function, int size);
 
-#endif //LOSSFUNCTIONS_H
+#endif // LOSSFUNCTIONS_H
