@@ -36,7 +36,6 @@ Layer::Layer(int size, NeuralEnums::LayerType layerType, NeuralEnums::Activation
 	if (batchSize > 1)
 	{
 		InputsBatch = new float* [batchSize];
-		InputsBatch = new float* [batchSize];
 		OutputsBatch = new float* [batchSize];
 		if (LayerType == NeuralEnums::LayerType::OutputLayer)
 			TargetsBatch = new float* [batchSize];

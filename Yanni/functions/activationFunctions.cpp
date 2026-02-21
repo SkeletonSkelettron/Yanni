@@ -6,8 +6,8 @@
 #include "statisticFunctions.h" 
 #include <stdexcept>
 
-const long double PI2 = 6.283185307179586476L;
-const long double SQ2 = 1.414213562373095048L;
+const float PI2 = 6.2831853071795f;
+const float SQ2 = 1.4142135623730f;
 
 //void BalanceWith(std::vector <float>& dataset, NeuralEnums::BalanceType BalancingMethod)
 //{

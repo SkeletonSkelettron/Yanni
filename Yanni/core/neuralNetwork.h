@@ -14,8 +14,7 @@
 #include "layer.h"
 #include "../functions/learningRateFunctions.h"
 #include "../functions/gradientFunctions.h"
-#include "../functions/lossFunctions.h"
-//https://stackoverflow.com/questions/16350473/why-do-i-need-stdcondition-variable
+#include "../functions/lossFunctions.h" 
 
 
 class NeuralNetwork
@@ -40,10 +39,10 @@ public:
 	float*** GradientsTemp;
 	float* lossesTmp;
 	float ro;
-	int iterations;
-	float beta1Pow;
-	float beta2Pow;
-	float betaAELR;
+	int iterations = 0;
+	float beta1Pow = 0.9;
+	float beta2Pow = 0.999;
+	float betaAELR = 0.001;
 
 	const float momentum = 0.9;
 	const float epsilon = 0.0000001;

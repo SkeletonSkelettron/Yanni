@@ -155,8 +155,8 @@ void NeuralNetwork::PropagateBackThreaded()
 	if (LearningRateType == NeuralEnums::LearningRateType::Adam)
 	{
 		iterations++;
-		beta1Pow = pow(0.9, iterations);
-		beta2Pow = pow(0.999, iterations);
+		beta1Pow *= 0.9;
+		beta2Pow *= 0.999;
 	}
 	//TODO ეს აქ არ უნდა იყოს
 	if (BatchSize > 1)
