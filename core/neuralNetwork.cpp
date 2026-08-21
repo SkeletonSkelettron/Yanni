@@ -82,44 +82,28 @@ void NeuralNetwork::InitializeWeights() {
         inData >> std::setprecision(100) >> Layers[i].Weights[count];
       }
     } else {
-      // Initialize based on activation function:
-      //   He   (ReLU, MReLU, GeLU):       N(0, sqrt(2 / fan_in))
-      //   Xavier (Sigmoid, Tanh, SoftSign, SoftPlus): U(-sqrt(6 / (fan_in +
-      //   fan_out)), sqrt(6 / (fan_in + fan_out)))
-      int fan_in = Layers[i - 1].Size;
-      int fan_out = Layers[i].Size - (Layers[i].UsingBias ? 1 : 0);
-      int biasShift = Layers[i].UsingBias ? 1 : 0;
+      // Original scheme (restored): uniform weights, scaled per activation.
+      // Xavier/He keep forward variance stable but are ~16x too small for a
+      // stack of sigmoids -- the gradient dies before it reaches layer 1 and
+      // the network never leaves chance accuracy. This scale trains.
+      for (int j = 0; j < size; j++)
+        Layers[i].Weights[j] =
+            Layers[i].UsingBias && j % Layers[i - 1].Size == 0
+                ? 1.0f
+                : (float)(rand() % 100);
 
-      std::mt19937 gen(42 +
-                       i); // deterministic seed per layer for reproducibility
+      int minMax[2];
+      bool sigmoidLike = Layers[i].ActivationFunction ==
+                         NeuralEnums::ActivationFunction::Sigmoid;
+      float start = sigmoidLike ? -1.0f : -0.07f;
+      float end = sigmoidLike ? 1.0f : 0.07f;
+      StandartizeLinearContract(Layers[i].Weights, size, minMax, start, end);
 
-      if (Layers[i].ActivationFunction ==
-              NeuralEnums::ActivationFunction::ReLU ||
-          Layers[i].ActivationFunction ==
-              NeuralEnums::ActivationFunction::MReLU ||
-          Layers[i].ActivationFunction ==
-              NeuralEnums::ActivationFunction::GeLU) {
-        // He initialization: W ~ N(0, sqrt(2/fan_in))
-        float stddev = sqrt(2.0f / fan_in);
-        std::normal_distribution<float> dist(0.0f, stddev);
-        for (int j = 0; j < size; j++) {
-          // Bias weights (column 0 in each neuron's row) initialized to 0
-          if (Layers[i - 1].UsingBias && j % fan_in == 0)
-            Layers[i].Weights[j] = 0.0f;
-          else
-            Layers[i].Weights[j] = dist(gen);
-        }
-      } else {
-        // Xavier/Glorot initialization: W ~ U(-limit, limit)
-        float limit = sqrt(6.0f / (fan_in + fan_out));
-        std::uniform_real_distribution<float> dist(-limit, limit);
-        for (int j = 0; j < size; j++) {
-          if (Layers[i - 1].UsingBias && j % fan_in == 0)
-            Layers[i].Weights[j] = 0.0f;
-          else
-            Layers[i].Weights[j] = dist(gen);
-        }
-      }
+      // bias column carries a fixed 1.0, not a scaled random value
+      if (Layers[i - 1].UsingBias)
+        for (int j = 0; j < size; j++)
+          if (j % Layers[i - 1].Size == 0)
+            Layers[i].Weights[j] = 1.0f;
     }
   }
 }
@@ -149,8 +133,10 @@ void NeuralNetwork::
   //  PopagateBackDelegateBatch2(0, 1, vector);
   if (LearningRateType == NeuralEnums::LearningRateType::Adam) {
     iterations++;
-    beta1Pow *= 0.9;
-    beta2Pow *= 0.999;
+    // beta^t, not beta^(t+1): beta1Pow starts at 0.9, so multiplying before
+    // first use overshoots by one power
+    beta1Pow = pow(beta1, iterations);
+    beta2Pow = pow(beta2, iterations);
   }
   // TODO ეს აქ არ უნდა იყოს
   if (BatchSize > 1) {
@@ -708,8 +694,7 @@ float NeuralNetwork::Adam(float &gradient, int &j, int &iterator) {
   // standard Adam: lr * mHat / (sqrt(vHat) + epsilon)
   return (LearningRate * Layers[iterator].Parameters[j]) /
          ((1 - beta1Pow) *
-              sqrt(Layers[iterator].GradientsLR[j] / (1 - beta2Pow)) +
-          epsilon);
+          (sqrt(Layers[iterator].GradientsLR[j] / (1 - beta2Pow)) + epsilon));
 }
 
 float NeuralNetwork::AdaGrad(float *gradients, float &gradient, int &j) {
