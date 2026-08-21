@@ -62,7 +62,7 @@ target_link_libraries(Yanni PRIVATE nlohmann_json::nlohmann_json Threads::Thread
 find_package(Threads REQUIRED)
 
 target_compile_options(Yanni PRIVATE
-    $<$<CXX_COMPILER_ID:GNU,Clang>:-O2 -Wall -Wextra -Wno-unused-parameter>
+    $<$<CXX_COMPILER_ID:GNU,Clang>:-O3 -march=native -Wall -Wextra -Wno-unused-parameter>
 )
 
 if(USE_CUDA)
