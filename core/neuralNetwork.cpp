@@ -133,8 +133,10 @@ void NeuralNetwork::
   //  PopagateBackDelegateBatch2(0, 1, vector);
   if (LearningRateType == NeuralEnums::LearningRateType::Adam) {
     iterations++;
-    beta1Pow *= 0.9;
-    beta2Pow *= 0.999;
+    // beta^t, not beta^(t+1): beta1Pow starts at 0.9, so multiplying before
+    // first use overshoots by one power
+    beta1Pow = pow(beta1, iterations);
+    beta2Pow = pow(beta2, iterations);
   }
   // TODO ეს აქ არ უნდა იყოს
   if (BatchSize > 1) {
@@ -692,8 +694,7 @@ float NeuralNetwork::Adam(float &gradient, int &j, int &iterator) {
   // standard Adam: lr * mHat / (sqrt(vHat) + epsilon)
   return (LearningRate * Layers[iterator].Parameters[j]) /
          ((1 - beta1Pow) *
-              sqrt(Layers[iterator].GradientsLR[j] / (1 - beta2Pow)) +
-          epsilon);
+          (sqrt(Layers[iterator].GradientsLR[j] / (1 - beta2Pow)) + epsilon));
 }
 
 float NeuralNetwork::AdaGrad(float *gradients, float &gradient, int &j) {
