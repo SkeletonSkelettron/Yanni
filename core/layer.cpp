@@ -10,7 +10,7 @@ Layer::Layer(int size, NeuralEnums::LayerType layerType,
   ActivationFunction = activationFunction;
   Inputs = new float[size]{};
   Outputs = new float[size]{};
-  DropoutNeurons = new bool[size];
+  DropoutNeurons = new float[size];
   Parameters = new float[size]{};
   RoHat = new float[size]{};
   GradientsForGrads = new float[size]{};
@@ -23,14 +23,6 @@ Layer::Layer(int size, NeuralEnums::LayerType layerType,
       layerType == NeuralEnums::LayerType::OutputLayer)
     biasShift = 0; // input and output layers should not drop perceprton
   IndexVectorSize = Size - biasShift;
-  IndexVector = new int[IndexVectorSize]{};
-  IndexVectorForNextLayer = new int[Size]{};
-  IndexVectorForNextLayerSize = Size;
-  IndexVectorForNextLayer[0] = 0;
-  for (int i = biasShift; i < Size; i++) {
-    IndexVector[i - biasShift] = i;
-    IndexVectorForNextLayer[i] = i;
-  }
 
   if (batchSize > 1) {
     InputsBatch = new float *[batchSize];
@@ -134,9 +126,7 @@ void Layer::CalculateOutputsThreaded(int &numThreads, bool &training,
 }
 
 void Layer::CalcInputsDelegate(float *prevLayerOutput, int prevLayerSize,
-                               float **prevLayerOutputBatch,
-                               int *prevLayerIndexes,
-                               int &prevLayerIndexVectorSize, bool &training,
+                               float **prevLayerOutputBatch, bool &training,
                                int &start, int &end) {
   float result;
   int biasShift = UsingBias ? 1 : 0;

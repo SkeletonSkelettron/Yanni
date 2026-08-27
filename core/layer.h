@@ -5,7 +5,7 @@
 #include <vector>
 class Layer {
 public:
-  int Size;
+  size_t Size;
   float *Inputs;
   float **InputsBatch;
   float *Weights;
@@ -30,9 +30,9 @@ public:
   int IndexVectorForNextLayerSize;
   float DropOutSize;
   bool UsingBias;
-  bool *DropoutNeurons; // if DropoutNeurons[i]==true, then Inputs[i] and
-                        // Outputs[0]  do not take part in calculations
+  float *DropoutNeurons;
   int BatchSize;
+
   NeuralEnums::ActivationFunction ActivationFunction;
   NeuralEnums::LayerType LayerType;
   Layer() {}
@@ -41,16 +41,12 @@ public:
         float dropoutSize = 0, int batchSize = 1);
 
   void CalcInputsDelegate(float *prevLayerOutput, int prevLayerSize,
-                          float **prevLayerOutputBatch, int *prevLayerIndexes,
-                          int &prevLayerIndexVectorSize, bool &training,
+                          float **prevLayerOutputBatch, bool &training,
                           int &start, int &end);
   void CalcOutputsDelegate(int &start, int &end, bool &training,
                            bool &countingRohat);
   void CalculateInputsThreaded(float *prevLayerOutput, int prevLayerSize,
-                               float **prevLayerOutputBatch,
-                               int *prevLayerIndex,
-                               int &prevLayerIndexVectorSize, bool &training,
-                               int &numThreads,
+                               float **prevLayerOutputBatch, int &numThreads,
                                std::vector<WorkerThread *> &_workers);
   void CalculateOutputsThreaded(int &numThreads, bool &training,
                                 bool &countingRohat,
