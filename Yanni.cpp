@@ -315,6 +315,10 @@ void ReadData(std::vector<std::vector<float>> &trainingSet,
   ReadMNISTMod(trainingSet, _labels, true);
   ReadMNISTMod(testSet, _testlabels, false);
 
+  if (trainingSet.size() == 0) {
+    return;
+  }
+
   int minmax[2];
   size_t totaltrain = trainingSet.size();
   labels.resize(totaltrain);
@@ -351,7 +355,7 @@ void readDataAndTest() {
   initNeUnetFromJson(neuralNetwork);
   cout << "start reading training+test data " << endl;
 
-  clock_t begin = clock();
+  auto begin = std::chrono::steady_clock::now();
   size_t trainingSetSize = 0;
   size_t testSetSize = 0;
 
@@ -359,7 +363,12 @@ void readDataAndTest() {
   std::vector<std::vector<float>> _testSet;
   std::vector<std::vector<float>> labeledTarget;
   std::vector<std::vector<float>> testLabeledTarget;
+
   ReadData(_trainingSet, _testSet, labeledTarget, testLabeledTarget);
+
+  if (_trainingSet.size() == 0) {
+    return;
+  }
 
   trainingSet = new MnistData[_trainingSet.size()];
   std::vector<int> index;
@@ -406,14 +415,17 @@ void readDataAndTest() {
   } else
 #endif
   {
-    clock_t end = clock();
+    auto end = std::chrono::steady_clock::now();
     cout << "...done in " +
-                std::to_string(float(end - begin) / CLOCKS_PER_SEC) + " seconds"
+                std::to_string(std::chrono::duration<double>(end - begin).count()) +
+                " seconds"
          << endl;
     size_t total = _trainingSet.size();
 
+    PrintNetworkInfo(neuralNetwork, total);
+
     cout << "start training" << endl;
-    begin = clock();
+    begin = std::chrono::steady_clock::now();
     size_t globalEpochs = 300;
     size_t totalcounter = 0;
     float loss = 0;
@@ -423,7 +435,7 @@ void readDataAndTest() {
             std::chrono::system_clock::now().time_since_epoch().count();
         // shuffle(index.begin(), index.end(),
         // std::default_random_engine(seed));
-        clock_t beginInside = clock();
+        auto beginInside = std::chrono::steady_clock::now();
 
         if (neuralNetwork.Type == NeuralEnums::NetworkType::Normal) {
           for (size_t i = 0; i < total / neuralNetwork.BatchSize; i++) {
@@ -530,14 +542,14 @@ void readDataAndTest() {
           //	}
           // }
         }
-        clock_t endInside = clock();
+        auto endInside = std::chrono::steady_clock::now();
 
         size_t counter = 0;
         size_t digitCounter = 0;
         cout << std::to_string(g + 1) + " of " + std::to_string(globalEpochs) +
                     " done in " +
-                    std::to_string(float(endInside - beginInside) /
-                                   CLOCKS_PER_SEC) +
+                    std::to_string(std::chrono::duration<double>(
+                        endInside - beginInside).count()) +
                     " seconds. " + ". loss: " +
                     std::to_string(losses.size() > 0 ? losses[losses.size() - 1]
                                                      : 0)
@@ -547,7 +559,7 @@ void readDataAndTest() {
         float result = 0;
         if (neuralNetwork.Type == NeuralEnums::NetworkType::Normal) {
           if (neuralNetwork.Metrics == NeuralEnums::Metrics::Full) {
-            beginInside = clock();
+            beginInside = std::chrono::steady_clock::now();
             for (size_t i = 0; i < trainingSetSize; i++) {
               neuralNetwork.Layers[0].Outputs = trainingSet[i].set;
               neuralNetwork.Layers[neuralNetwork.LayersSize - 1].Target =
@@ -564,16 +576,16 @@ void readDataAndTest() {
             result = (float)counter / (float)digitCounter;
             auto testComplete =
                 "training-set result: " + std::to_string(result);
-            endInside = clock();
+            endInside = std::chrono::steady_clock::now();
             cout << "...training set testing done in " +
-                        std::to_string(float(endInside - beginInside) /
-                                       CLOCKS_PER_SEC) +
+                        std::to_string(std::chrono::duration<double>(
+                            endInside - beginInside).count()) +
                         " seconds. Result: " + std::to_string(result)
                  << endl;
           }
           if (neuralNetwork.Metrics == NeuralEnums::Metrics::TestSet ||
               neuralNetwork.Metrics == NeuralEnums::Metrics::Full) {
-            beginInside = clock();
+            beginInside = std::chrono::steady_clock::now();
             counter = 0;
             digitCounter = 0;
             for (size_t i = 0; i < testSetSize; i++) {
@@ -591,10 +603,10 @@ void readDataAndTest() {
             }
             result = (float)counter / (float)digitCounter;
             auto testComplete2 = "; test-set result: " + std::to_string(result);
-            endInside = clock();
+            endInside = std::chrono::steady_clock::now();
             cout << "...testing set testing done in " +
-                        std::to_string(float(endInside - beginInside) /
-                                       CLOCKS_PER_SEC) +
+                        std::to_string(std::chrono::duration<double>(
+                            endInside - beginInside).count()) +
                         " seconds. Result: " + std::to_string(result) +
                         ". loss: " + std::to_string(losses[losses.size() - 2])
                  << endl;
@@ -618,14 +630,16 @@ void readDataAndTest() {
       }
     }
 
-    end = clock();
+    end = std::chrono::steady_clock::now();
     cout << "training done in " +
-                std::to_string(float(end - begin) / CLOCKS_PER_SEC) + " seconds"
+                std::to_string(std::chrono::duration<double>(end - begin).count()) +
+                " seconds"
          << endl;
   }
 }
 
 int main() {
+  srand(time(NULL));
   std::thread test(readDataAndTest);
   // std::thread test(testNet);
   test.join();
