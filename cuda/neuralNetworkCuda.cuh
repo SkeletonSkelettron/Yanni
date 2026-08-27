@@ -51,7 +51,6 @@ __device__ struct NeuralNetworkCuda {
       int biasShift = Layers[k].UsingBias ? 1 : 0;
       if (Layers[k].DropOutSize > 0 && Layers[k].LayerType == 1) // Hidden Layer
       {
-        srand(time(NULL));
         int rnum = 0;
         bool tmp;
         for (int i = 0; i < Layers[k].Size; i++) {

@@ -76,6 +76,9 @@ public:
   float AdaMax(float &gradient, int &j, int &iterator);
   float RMSProp(float *gradients, float &gradient, int &j);
 };
+
+// Dump the assembled network (not the JSON) before training starts.
+void PrintNetworkInfo(NeuralNetwork &nn, size_t trainingSetSize);
 #endif // NEURALNETWORK_H
 
 /*#include <cublas_v2.h>

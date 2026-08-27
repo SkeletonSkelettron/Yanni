@@ -1,7 +1,7 @@
 #include "readMnist.h"
-#include <cstring>
+#include <filesystem>
 #include <fstream>
-#include <string>
+#include <iostream>
 #include <vector>
 
 unsigned int in(std::ifstream &icin, unsigned int size) {
@@ -20,11 +20,22 @@ void ReadMNISTMod(std::vector<std::vector<float>> &images,
                   std::vector<int> &labels, bool train) {
   unsigned int num, magic, rows, cols;
   std::ifstream icin;
-  icin.open(train ? "mnist/train-images.idx3-ubyte"
-                  : "mnist/t10k-images.idx3-ubyte",
+
+  namespace fs = std::filesystem;
+  auto exe_dir = fs::read_symlink("/proc/self/exe").parent_path();
+  auto path = exe_dir;
+  icin.open(exe_dir / (train ? "mnist/train-images.idx3-ubyte"
+                             : "mnist/t10k-images.idx3-ubyte"),
             std::ios::binary);
   magic = in(icin, 4), num = in(icin, 4), rows = in(icin, 4),
   cols = in(icin, 4);
+  auto isOpen = icin.is_open();
+  const int state = icin.rdstate();
+  std::cout << "icin state" << state << std::endl;
+  if (!isOpen) {
+    std::cout << "MNIST database not found" << std::endl;
+    return;
+  }
   std::vector<float> img;
   std::vector<std::vector<float>> img2;
   for (long int i = 0; i < num; i++) {

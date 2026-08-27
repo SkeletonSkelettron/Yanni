@@ -1,6 +1,7 @@
 ﻿#include "neuralNetwork.h"
 #include "../functions/statisticFunctions.h"
 #include <algorithm>
+#include <cstdio>
 #include <math.h>
 
 int pLS_ = 0;
@@ -27,7 +28,6 @@ void NeuralNetwork::ShuffleDropoutsPlain() {
     int biasShift = Layers[k].UsingBias ? 1 : 0;
     if (Layers[k].DropOutSize > 0 &&
         Layers[k].LayerType == NeuralEnums::LayerType::HiddenLayer) {
-      srand(time(NULL));
       int rnum = 0;
       bool tmp;
       for (int i = 0; i < Layers[k].Size; i++) {
@@ -51,7 +51,6 @@ void NeuralNetwork::ShuffleDropoutsPlain() {
 }
 
 void NeuralNetwork::InitializeWeights() {
-  srand(time(NULL));
   Layers[0].WeightsSize = 1;
   Layers[0].Weights = new float[1]{0};
   for (int i = 1; i < LayersSize; i++) {
@@ -742,4 +741,126 @@ float NeuralNetwork::AdaMax(float &gradient, int &j, int &iterator) {
 float NeuralNetwork::RMSProp(float *gradients, float &gradient, int &j) {
   gradients[j] = momentum * gradients[j] + (1 - momentum) * gradient * gradient;
   return startingLearningRate / sqrt(gradients[j] + epsilon);
+}
+
+static const char *ActName(NeuralEnums::ActivationFunction a) {
+  using A = NeuralEnums::ActivationFunction;
+  switch (a) {
+  case A::None:
+    return "None";
+  case A::Sigmoid:
+    return "Sigmoid";
+  case A::Tanh:
+    return "Tanh";
+  case A::ReLU:
+    return "ReLU";
+  case A::MReLU:
+    return "MReLU";
+  case A::SoftMax:
+    return "SoftMax";
+  case A::GeLU:
+    return "GeLU";
+  case A::SoftPlus:
+    return "SoftPlus";
+  case A::SoftSign:
+    return "SoftSign";
+  }
+  return "?";
+}
+static const char *LayerName(NeuralEnums::LayerType t) {
+  using L = NeuralEnums::LayerType;
+  switch (t) {
+  case L::InputLayer:
+    return "Input";
+  case L::HiddenLayer:
+    return "Hidden";
+  case L::OutputLayer:
+    return "Output";
+  case L::None:
+    return "None";
+  }
+  return "?";
+}
+static const char *LrName(NeuralEnums::LearningRateType t) {
+  using R = NeuralEnums::LearningRateType;
+  switch (t) {
+  case R::Static:
+    return "Static";
+  case R::Adam:
+    return "Adam";
+  case R::AdaGrad:
+    return "AdaGrad";
+  case R::AdaDelta:
+    return "AdaDelta";
+  case R::AdamMod:
+    return "AdamMod";
+  case R::AdaMax:
+    return "AdaMax";
+  case R::AMSGrad:
+    return "AMSGrad";
+  case R::Cyclic:
+    return "Cyclic";
+  case R::GuraMethod:
+    return "GuraMethod";
+  case R::Nadam:
+    return "Nadam";
+  case R::RMSProp:
+    return "RMSProp";
+  }
+  return "?";
+}
+
+void PrintNetworkInfo(NeuralNetwork &nn, size_t trainingSetSize) {
+  printf("\n=== network ===\n");
+  printf("  batch %d | threads %d | lr %.4g (%s)\n", nn.BatchSize,
+         nn.ThreadCount, nn.LearningRate, LrName(nn.LearningRateType));
+
+  printf("\n  %-3s %-7s %-9s %5s %4s  %-13s %10s\n", "#", "type", "act", "size",
+         "bias", "weights", "params");
+  long total = 0;
+  for (int i = 0; i < nn.LayersSize; i++) {
+    Layer &L = nn.Layers[i];
+    int bs = L.UsingBias ? 1 : 0;
+    long w = (i == 0) ? 0 : (long)nn.Layers[i - 1].Size * (L.Size - bs);
+    total += w;
+    char shape[32] = "-";
+    if (i)
+      snprintf(shape, sizeof shape, "%d x %d", L.Size - bs,
+               nn.Layers[i - 1].Size);
+    printf("  %-3d %-7s %-9s %5d %4s  %-13s %10ld\n", i, LayerName(L.LayerType),
+           ActName(L.ActivationFunction), L.Size, L.UsingBias ? "yes" : "no",
+           shape, w);
+  }
+  printf("  %54s %10ld\n", "total parameters:", total);
+  printf("  %54s %9.1f MB\n", "weights memory:", total * sizeof(float) / 1e6);
+
+  // things that can be silently wrong
+  printf("\n  checks:\n");
+  if (nn.BatchSize > 1 && nn.BatchSize % nn.ThreadCount)
+    printf("    !! BatchSize %% ThreadCount = %d -> %d samples per batch are\n"
+           "       silently skipped, but the gradient is still divided by "
+           "BatchSize\n",
+           nn.BatchSize % nn.ThreadCount, nn.BatchSize % nn.ThreadCount);
+  else
+    printf("    ok  BatchSize divides evenly by ThreadCount\n");
+
+  if (nn.BatchSize > 0 && trainingSetSize)
+    printf("    %zu samples / batch %d = %zu weight updates per epoch\n",
+           trainingSetSize, nn.BatchSize, trainingSetSize / nn.BatchSize);
+
+  for (int i = 1; i < nn.LayersSize; i++)
+    if (nn.Layers[i].WeightsSize == 0)
+      printf("    !! layer %d: WeightsSize = 0 (the CUDA path sizes its\n"
+             "       cudaMalloc from this)\n",
+             i);
+
+  for (int i = 0; i < nn.LayersSize; i++) {
+    Layer &L = nn.Layers[i];
+    int expect = L.Size - (L.UsingBias ? 1 : 0);
+    if (L.DropOutSize > 0)
+      printf(
+          "    layer %d: dropout %.2f, IndexVectorSize %d (full would be %d)\n",
+          i, L.DropOutSize, L.IndexVectorSize, expect);
+  }
+  printf("\n");
 }
