@@ -2,10 +2,12 @@
 #define LAYER_H
 #include "enums.h"
 #include "workerThread.h"
+#include <algorithm>
 #include <vector>
+
 class Layer {
 public:
-  size_t Size;
+  int Size;
   float *Inputs;
   float **InputsBatch;
   float *Weights;
@@ -24,13 +26,9 @@ public:
   float *LearningRates;
   float *Target;
   float **TargetsBatch;
-  int *IndexVector;
-  int IndexVectorSize;
-  int *IndexVectorForNextLayer;
-  int IndexVectorForNextLayerSize;
-  float DropOutSize;
+  int MaskSize;
   bool UsingBias;
-  float *DropoutNeurons;
+  float *Mask;
   int BatchSize;
 
   NeuralEnums::ActivationFunction ActivationFunction;
@@ -38,7 +36,7 @@ public:
   Layer() {}
   Layer(int size, NeuralEnums::LayerType layerType,
         NeuralEnums::ActivationFunction activationFunction, float bias,
-        float dropoutSize = 0, int batchSize = 1);
+        int batchSize = 1);
 
   void CalcInputsDelegate(float *prevLayerOutput, int prevLayerSize,
                           float **prevLayerOutputBatch, bool &training,

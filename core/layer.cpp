@@ -1,28 +1,22 @@
 ﻿#include "layer.h"
 #include "../functions/activationFunctions.h"
-#include <cstddef>
 
 Layer::Layer(int size, NeuralEnums::LayerType layerType,
              NeuralEnums::ActivationFunction activationFunction, float bias,
-             float dropoutSize, int batchSize) {
-  Size = size;
+             int batchSize) {
+
+  UsingBias = !(bias == 0.0f);
+  Size = size + (UsingBias ? 1 : 0);
   LayerType = layerType;
   ActivationFunction = activationFunction;
-  Inputs = new float[size]{};
-  Outputs = new float[size]{};
-  DropoutNeurons = new float[size];
-  Parameters = new float[size]{};
-  RoHat = new float[size]{};
-  GradientsForGrads = new float[size]{};
-  DropOutSize = dropoutSize;
-  UsingBias = !(bias == NULL);
-  BatchSize = batchSize;
+  Mask = new float[Size]{};
 
-  auto biasShift = UsingBias ? 1 : 0;
-  if (layerType == NeuralEnums::LayerType::InputLayer ||
-      layerType == NeuralEnums::LayerType::OutputLayer)
-    biasShift = 0; // input and output layers should not drop perceprton
-  IndexVectorSize = Size - biasShift;
+  Inputs = new float[Size]{};
+  Outputs = new float[Size]{};
+  std::fill(Mask, Mask + Size, 1.0f);
+  RoHat = new float[Size]{};
+  GradientsForGrads = new float[Size]{};
+  BatchSize = batchSize;
 
   if (batchSize > 1) {
     InputsBatch = new float *[batchSize];
@@ -31,33 +25,26 @@ Layer::Layer(int size, NeuralEnums::LayerType layerType,
       TargetsBatch = new float *[batchSize];
 
     for (int i = 0; i < batchSize; i++) {
-      InputsBatch[i] = new float[size]{};
-      OutputsBatch[i] = new float[size]{};
+      InputsBatch[i] = new float[Size]{};
+      OutputsBatch[i] = new float[Size]{};
       if (LayerType == NeuralEnums::LayerType::OutputLayer)
-        TargetsBatch[i] = new float[size]{};
+        TargetsBatch[i] = new float[Size]{};
     }
-  }
-  for (size_t i = 0; i < Size; i++) {
-    DropoutNeurons[i] = false;
-  }
-  if (DropOutSize > 0) {
-    for (int i = 0; i < Size; i++)
-      DropoutNeurons[i] = i < Size * DropOutSize;
+    if (UsingBias) {
+      for (int i = 0; i < batchSize; i++) {
+        InputsBatch[i][0] = bias;
+      }
+    }
   }
   if (UsingBias) {
     Inputs[0] = bias;
-    if (batchSize > 1)
-      for (int i = 0; i < batchSize; i++) {
-        InputsBatch[i] = new float[Size]{};
-        InputsBatch[i][0] = bias;
-      }
   }
 }
 
 //---------------------------------------------------
 void Layer::CalculateInputsThreaded(float *prevLayerOutput, int prevLayerSize,
                                     float **prevLayerOutputBatch,
-                                    int *prevLayerIndex,
+
                                     int &prevLayerIndexVectorSize,
                                     bool &training, int &numThreads,
                                     std::vector<WorkerThread *> &_workers) {
@@ -67,10 +54,9 @@ void Layer::CalculateInputsThreaded(float *prevLayerOutput, int prevLayerSize,
     int idx = 0;
     for (int i = 0; i < numThreads; i++) {
       idx = chunkSize * i;
-      _workers[i]->doAsync(
-          std::bind(&Layer::CalcInputsDelegate, this, prevLayerOutput,
-                    prevLayerSize, prevLayerOutputBatch, prevLayerIndex,
-                    prevLayerIndexVectorSize, training, idx, idx + chunkSize));
+      _workers[i]->doAsync(std::bind(
+          &Layer::CalcInputsDelegate, this, prevLayerOutput, prevLayerSize,
+          prevLayerOutputBatch, training, idx, idx + chunkSize));
     }
     for (int k = 0; k < numThreads; k++)
       _workers[k]->wait();
@@ -85,8 +71,7 @@ void Layer::CalculateInputsThreaded(float *prevLayerOutput, int prevLayerSize,
 
       _workers[i]->doAsync(
           std::bind(&Layer::CalcInputsDelegate, this, prevLayerOutput,
-                    prevLayerSize, prevLayerOutputBatch, prevLayerIndex,
-                    prevLayerIndexVectorSize, training, start, end));
+                    prevLayerSize, prevLayerOutputBatch, training, start, end));
     }
     for (int i = iterator; i--;)
       _workers[i]->wait();
@@ -164,15 +149,16 @@ void Layer::CalcOutputsDelegate(int &start, int &end, bool &training,
                                 bool &countingRohat) {
   // TODO ჩასამატებელია SoftMax რეალიზაცია
   if (BatchSize > 1 && training) {
+    auto nonZeroMaskSize = Size - std::count(Mask, Mask + Size, 0.0f);
     for (int batch = start; batch < end; batch++) {
-      int vStart = 0, vEnd = IndexVectorSize;
-      ActivateWith(InputsBatch[batch], OutputsBatch[batch], IndexVector, vStart,
-                   vEnd, ActivationFunction);
+      int vStart = 0, vEnd = nonZeroMaskSize;
+      ActivateWith(InputsBatch[batch], OutputsBatch[batch], Mask, vStart, vEnd,
+                   ActivationFunction);
       if (UsingBias)
         OutputsBatch[batch][0] = InputsBatch[batch][0];
     }
   } else {
-    ActivateWith(Inputs, Outputs, IndexVector, start, end, ActivationFunction);
+    ActivateWith(Inputs, Outputs, Mask, start, end, ActivationFunction);
     if (countingRohat)
       for (int i = start; i < end; i++)
         RoHat[i] += Outputs[i];

@@ -26,26 +26,16 @@ void NeuralNetwork::NeuralNetworkInit() {
 void NeuralNetwork::ShuffleDropoutsPlain() {
   for (int k = 1; k < LayersSize; k++) {
     int biasShift = Layers[k].UsingBias ? 1 : 0;
-    if (Layers[k].DropOutSize > 0 &&
+    if (Layers[k].MaskSize > 0 &&
         Layers[k].LayerType == NeuralEnums::LayerType::HiddenLayer) {
       int rnum = 0;
       bool tmp;
       for (int i = 0; i < Layers[k].Size; i++) {
         rnum = rand() % Layers[k].Size;
-        tmp = Layers[k].DropoutNeurons[i];
-        Layers[k].DropoutNeurons[i] = Layers[k].DropoutNeurons[rnum];
-        Layers[k].DropoutNeurons[rnum] = tmp;
+        tmp = Layers[k].Mask[i];
+        Layers[k].Mask[i] = Layers[k].Mask[rnum];
+        Layers[k].Mask[rnum] = tmp;
       }
-
-      int counter = 0;
-      if (biasShift == 1)
-        Layers[k].IndexVectorForNextLayer[0] = 0;
-      for (int i = biasShift; i < Layers[k].Size; i++)
-        if (!Layers[k].DropoutNeurons[i]) {
-          Layers[k].IndexVector[counter] = i;
-          Layers[k].IndexVectorForNextLayer[counter + biasShift] = i;
-          counter++;
-        }
     }
   }
 }
@@ -205,7 +195,7 @@ void NeuralNetwork::PropagateBackDelegate(int i, int start, int end) {
     Layers[i].Inputs[j] =
         Layers[i].Outputs[j] *
         DifferentiateWith(Layers[i].Inputs[j], Layers[i].ActivationFunction,
-                          Layers[i].Inputs, Layers[i].DropoutNeurons);
+                          Layers[i].Inputs, Layers[i].Mask);
 
     for (int pp = Layers[i - 1].IndexVectorForNextLayerSize; pp--;) {
       p = Layers[i - 1].IndexVectorForNextLayer[pp];
@@ -241,7 +231,7 @@ void NeuralNetwork::PropagateBackDelegateNew(int i, int start, int end) {
 
       Layers[i].Inputs[j] =
           DifferentiateWith(Layers[i].Inputs[j], Layers[i].ActivationFunction,
-                            Layers[i].Inputs, Layers[i].DropoutNeurons);
+                            Layers[i].Inputs, Layers[i].Mask);
 
       // Output ლეიერში წონების დაკორექტირება
       for (int pp = 0; pp < Layers[i - 1].IndexVectorForNextLayerSize; pp++) {
@@ -262,7 +252,7 @@ void NeuralNetwork::PropagateBackDelegateNew(int i, int start, int end) {
     } else {
       Layers[i].Inputs[j] =
           DifferentiateWith(Layers[i].Inputs[j], Layers[i].ActivationFunction,
-                            Layers[i].Inputs, Layers[i].DropoutNeurons);
+                            Layers[i].Inputs, Layers[i].Mask);
 
       float sum = 0;
       int nextLayerBiasShift = Layers[i + 1].UsingBias ? 1 : 0;
@@ -432,9 +422,9 @@ void NeuralNetwork::PropagateBackDelegateBatch(int start, int end,
                                     LossFunctionType, Layers[i].Size);
         Layers[i].InputsBatch[batch][j] =
             Layers[i].OutputsBatch[batch][j] *
-            DifferentiateWith(
-                Layers[i].InputsBatch[batch][j], Layers[i].ActivationFunction,
-                Layers[i].InputsBatch[batch], Layers[i].DropoutNeurons);
+            DifferentiateWith(Layers[i].InputsBatch[batch][j],
+                              Layers[i].ActivationFunction,
+                              Layers[i].InputsBatch[batch], Layers[i].Mask);
 
         for (int pp = 0; pp < Layers[i - 1].IndexVectorForNextLayerSize; pp++) {
           p = Layers[i - 1].IndexVectorForNextLayer[pp];
@@ -450,7 +440,7 @@ void NeuralNetwork::PropagateBackDelegateBatch(int start, int end,
       }
       if (i != 1) // ამის ოპტიმიზაცია შეიძლება
         for (int p = /*Layers[i - 1].UsingBias ? 1 :*/ 0; p < pLS; p++) {
-          if (Layers[i - 1].DropoutNeurons[p])
+          if (Layers[i - 1].Mask[p])
             continue;
           Layers[i - 1].OutputsBatch[batch][p] = outputsTemp[p];
         }
@@ -857,10 +847,10 @@ void PrintNetworkInfo(NeuralNetwork &nn, size_t trainingSetSize) {
   for (int i = 0; i < nn.LayersSize; i++) {
     Layer &L = nn.Layers[i];
     int expect = L.Size - (L.UsingBias ? 1 : 0);
-    if (L.DropOutSize > 0)
+    if (L.MaskSize > 0)
       printf(
           "    layer %d: dropout %.2f, IndexVectorSize %d (full would be %d)\n",
-          i, L.DropOutSize, L.IndexVectorSize, expect);
+          i, L.MaskSize, L.IndexVectorSize, expect);
   }
   printf("\n");
 }

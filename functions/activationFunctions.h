@@ -30,7 +30,7 @@
 //	}
 // }
 
-void ActivateWith(float *inputs, float *outputs, int *indexVector, int &start,
+void ActivateWith(float *inputs, float *outputs, float *mask, int &start,
                   int &end, NeuralEnums::ActivationFunction &function);
 
 inline float SoftSign(float &x);
@@ -41,11 +41,11 @@ float SoftPlus(float &x);
 
 inline float SoftPlusDerivative(float &x);
 
-inline float SoftMax(float &x, float *layerInputs, int *indexVector,
-                     int &indexVectorSize);
+inline float SoftMax(float &x, float *layerInputs, float *mask,
+                     int &maskNonZeroSize);
 
-inline float SoftMaxDerivative(float &x, float *inputs, int *indexVector,
-                               int &indexVectorSize);
+inline float SoftMaxDerivative(float &x, float *inputs, float *mask,
+                               int &maskNonZeroSize);
 
 inline float Sigmoid(float &x);
 
@@ -71,34 +71,34 @@ int GetMaxIndex(float *outPut, int outpSize);
 
 float exp1024(float x);
 
-inline void GeLU_v(float *inputs, float *outputs, int *indexVector, int &start,
+inline void GeLU_v(float *inputs, float *outputs, float *mask, int &start,
                    int &end);
 
-inline void Sigmoid_v(float *inputs, float *outputs, int *indexVector,
-                      int &start, int &end);
+inline void Sigmoid_v(float *inputs, float *outputs, float *mask, int &start,
+                      int &end);
 
-inline void Tanh_v(float *inputs, float *outputs, int *indexVector, int &start,
+inline void Tanh_v(float *inputs, float *outputs, float *mask, int &start,
                    int &end);
 
-inline void MReLU_v(float *inputs, float *outputs, int *indexVector, int &start,
+inline void MReLU_v(float *inputs, float *outputs, float *mask, int &start,
                     int &end);
 
-inline void ReLU_v(float *inputs, float *outputs, int *indexVector, int &start,
+inline void ReLU_v(float *inputs, float *outputs, float *mask, int &start,
                    int &end);
 
 inline void SoftMax_v(float *inputs, float *inputsSoftMax, float *outputs,
-                      int *indexVector, int &start, int &end);
+                      float *mask, int &start, int &end);
 
-inline void SoftPlus_v(float *inputs, float *outputs, int *indexVector,
-                       int &start, int &end);
+inline void SoftPlus_v(float *inputs, float *outputs, float *mask, int &start,
+                       int &end);
 
-inline void SoftSign_v(float *inputs, float *outputs, int *indexVector,
-                       int &start, int &end);
+inline void SoftSign_v(float *inputs, float *outputs, float *mask, int &start,
+                       int &end);
 
-inline void Assign_v(float *inputs, float *outputs, int *indexVector,
-                     int &start, int &end);
+inline void Assign_v(float *inputs, float *outputs, float *mask, int &start,
+                     int &end);
 
 float DifferentiateWith(float &x, NeuralEnums::ActivationFunction &function,
-                        float *inputs, bool *dropouts);
+                        float *inputs, float *mask);
 
-#endif ACTIVATIONFUNCTIONS_H
+#endif // ACTIVATIONFUNCTIONS_H

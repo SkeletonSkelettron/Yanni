@@ -33,35 +33,35 @@ const float SQ2 = 1.4142135623730f;
 //	}
 // }
 
-void ActivateWith(float *inputs, float *outputs, int *indexVector, int &start,
+void ActivateWith(float *inputs, float *outputs, float *mask, int &start,
                   int &end, NeuralEnums::ActivationFunction &function) {
   switch (function) {
   case (NeuralEnums::ActivationFunction::Sigmoid): {
-    Sigmoid_v(inputs, outputs, indexVector, start, end);
+    Sigmoid_v(inputs, outputs, mask, start, end);
     break;
   }
   case (NeuralEnums::ActivationFunction::ReLU): {
-    ReLU_v(inputs, outputs, indexVector, start, end);
+    ReLU_v(inputs, outputs, mask, start, end);
     break;
   }
   case (NeuralEnums::ActivationFunction::MReLU): {
-    MReLU_v(inputs, outputs, indexVector, start, end);
+    MReLU_v(inputs, outputs, mask, start, end);
     break;
   }
   case (NeuralEnums::ActivationFunction::Tanh): {
-    Tanh_v(inputs, outputs, indexVector, start, end);
+    Tanh_v(inputs, outputs, mask, start, end);
     break;
   }
   case (NeuralEnums::ActivationFunction::GeLU): {
-    GeLU_v(inputs, outputs, indexVector, start, end);
+    GeLU_v(inputs, outputs, mask, start, end);
     break;
   }
   case (NeuralEnums::ActivationFunction::SoftPlus): {
-    SoftPlus_v(inputs, outputs, indexVector, start, end);
+    SoftPlus_v(inputs, outputs, mask, start, end);
     break;
   }
   case (NeuralEnums::ActivationFunction::SoftSign): {
-    SoftSign_v(inputs, outputs, indexVector, start, end);
+    SoftSign_v(inputs, outputs, mask, start, end);
     break;
   }
   default:
@@ -69,60 +69,60 @@ void ActivateWith(float *inputs, float *outputs, int *indexVector, int &start,
   }
 }
 
-inline void GeLU_v(float *inputs, float *outputs, int *indexVector, int &start,
+inline void GeLU_v(float *inputs, float *outputs, float *mask, int &start,
                    int &end) {
   for (int i = start; i < end; i++) {
-    outputs[indexVector[i]] = GeLU(inputs[indexVector[i]]);
+    outputs[i] = mask[i] == 0.0f ? 0.0f : mask[i] * GeLU(inputs[i]);
   }
 }
-inline void Sigmoid_v(float *inputs, float *outputs, int *indexVector,
-                      int &start, int &end) {
+inline void Sigmoid_v(float *inputs, float *outputs, float *mask, int &start,
+                      int &end) {
   for (int i = start; i < end; i++) {
-    outputs[indexVector[i]] = Sigmoid(inputs[indexVector[i]]);
+    outputs[i] = mask[i] == 0.0f ? 0.0f : mask[i] * Sigmoid(inputs[i]);
   }
 }
-inline void Tanh_v(float *inputs, float *outputs, int *indexVector, int &start,
+inline void Tanh_v(float *inputs, float *outputs, float *mask, int &start,
                    int &end) {
   for (int i = start; i < end; i++) {
-    outputs[indexVector[i]] = tanh(inputs[indexVector[i]]);
+    outputs[i] = mask[i] == 0.0f ? 0.0f : mask[i] * tanh(inputs[i]);
   }
 }
-inline void MReLU_v(float *inputs, float *outputs, int *indexVector, int &start,
+inline void MReLU_v(float *inputs, float *outputs, float *mask, int &start,
                     int &end) {
   for (int i = start; i < end; i++) {
-    outputs[indexVector[i]] = MReLU(inputs[indexVector[i]]);
+    outputs[i] = mask[i] == 0.0f ? 0.0f : mask[i] * MReLU(inputs[i]);
   }
 }
-inline void ReLU_v(float *inputs, float *outputs, int *indexVector, int &start,
+inline void ReLU_v(float *inputs, float *outputs, float *mask, int &start,
                    int &end) {
   for (int i = start; i < end; i++) {
-    outputs[indexVector[i]] = ReLU(inputs[indexVector[i]]);
+    outputs[i] = mask[i] == 0.0f ? 0.0f : mask[i] * ReLU(inputs[i]);
   }
 }
 inline void SoftMax_v(float *inputs, float *inputsSoftMax, float *outputs,
-                      int *indexVector, int &start, int &end) {
+                      float *mask, int &start, int &end) {
   // TODO მაინც კაი სანახავია როგორ მუშაობს
-  // for (int i = 0; i < indexVectorSize; i++);
-  //  outputs[indexVectorSize[i]] = SoftMax(inputs[indexVectorSize[i]],
+  // for (int i = 0; i < maskSize; i++);
+  //  outputs[maskSize[i]] = SoftMax(inputs[indexVectorSize[i]],
   //  inputsSoftMax, dropoutNeurons);
 }
-inline void SoftPlus_v(float *inputs, float *outputs, int *indexVector,
-                       int &start, int &end) {
+inline void SoftPlus_v(float *inputs, float *outputs, float *mask, int &start,
+                       int &end) {
   for (int i = start; i < end; i++) {
-    outputs[indexVector[i]] = SoftPlus(inputs[indexVector[i]]);
+    outputs[i] = mask[i] == 0.0f ? 0.0f : mask[i] * SoftPlus(inputs[i]);
   }
 }
-inline void SoftSign_v(float *inputs, float *outputs, int *indexVector,
-                       int &start, int &end) {
+inline void SoftSign_v(float *inputs, float *outputs, float *mask, int &start,
+                       int &end) {
   for (int i = start; i < end; i++) {
-    outputs[indexVector[i]] = SoftSign(inputs[indexVector[i]]);
+    outputs[i] = mask[i] == 0.0f ? 0.0f : mask[i] * SoftSign(inputs[i]);
   }
 }
 
-inline void Assign_v(float *inputs, float *outputs, int *indexVector,
-                     int &start, int &end) {
+inline void Assign_v(float *inputs, float *outputs, float *mask, int &start,
+                     int &end) {
   for (int i = start; i < end; i++) {
-    outputs[indexVector[i]] = inputs[indexVector[i]];
+    outputs[i] = mask[i] == 0.0f ? 0.0f : mask[i] * inputs[i];
   }
 }
 
@@ -131,18 +131,17 @@ inline float SoftSignDerivative(float &x) { return 1.0 / pow(1.0 + abs(x), 2); }
 
 float SoftPlus(float &x) { return log(1.0 + exp(x)); }
 inline float SoftPlusDerivative(float &x) { return 1.0 / (1.0 + exp(-x)); }
-inline float SoftMax(float &x, float *layerInputs, int *indexVector,
-                     int &indexVectorSize) {
+inline float SoftMax(float &x, float *layerInputs, float *mask, int &size) {
   float sum = 0.0;
-  for (int i = 0; i < indexVectorSize; i++) {
-    sum += exp(layerInputs[indexVector[i]]);
+  for (int i = 0; i < size; i++) {
+    sum += mask[i] == 0.0f ? 0.0 : exp(layerInputs[i]);
   }
   return exp(x) / sum;
 }
 
-inline float SoftMaxDerivative(float &x, float *inputs, int *indexVector,
-                               int &indexVectorSize) {
-  float y = SoftMax(x, inputs, indexVector, indexVectorSize);
+inline float SoftMaxDerivative(float &x, float *inputs, float *mask,
+                               int &size) {
+  float y = SoftMax(x, inputs, mask, size);
   return y * (1.0 - y);
 }
 
@@ -155,7 +154,7 @@ inline float SigmoidDerivative(float &x) {
 
 inline float ReLU(float &x) { return x <= 0.0 ? 0.0 : x; }
 
-inline float ReLUDerivative(float &x) { return x == 0.0 ? 0.0 : 1.0; }
+inline float ReLUDerivative(float &x) { return x <= 0.0 ? 0.0 : 1.0; }
 
 inline float Tanh(float &x) { return tanh(x); }
 
@@ -168,13 +167,17 @@ inline float MReLUDerivative(float &x) { return x < 0.0 ? 0.0005 : 1.0; }
 inline float GeLU(float &x) { return 0.5 * x * (1.0 + erf(x / SQ2)); }
 
 inline float GeLUDerivative(float &x) {
-  return 0.5 + 0.5 * erf(x / SQ2) + x / (exp(-(x * x) / 2.0) * pow(PI2, 0.5));
+  return 0.5 * (1.0 + erf(x / SQ2)) + x * exp(-(x * x) / 2.0) / pow(PI2, 0.5);
 }
 
 int GetMaxIndex(float *outPut, int outpSize) {
+  if (outpSize <= 0)
+    throw std::runtime_error("GetMaxIndex: empty output");
   int index = 0;
   float val = outPut[0];
-  for (unsigned long int i = 0; i < outpSize; i++) {
+  for (int i = 0; i < outpSize; i++) {
+    if (std::isnan(outPut[i]))
+      throw std::runtime_error("GetMaxIndex: NaN in output layer");
     if (outPut[i] > val) {
       val = outPut[i];
       index = i;
@@ -198,7 +201,7 @@ float exp1024(float x) {
 }
 
 float DifferentiateWith(float &x, NeuralEnums::ActivationFunction &function,
-                        float *inputs, bool *dropouts) {
+                        float *inputs, float *mask) {
   switch (function) {
   case (NeuralEnums::ActivationFunction::Sigmoid): {
     return SigmoidDerivative(x);
@@ -222,6 +225,11 @@ float DifferentiateWith(float &x, NeuralEnums::ActivationFunction &function,
   }
   case (NeuralEnums::ActivationFunction::SoftPlus): {
     return SoftPlusDerivative(x);
+    break;
+  }
+
+  case (NeuralEnums::ActivationFunction::SoftSign): {
+    return SoftSignDerivative(x);
     break;
   }
   default: {
