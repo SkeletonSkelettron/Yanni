@@ -1,10 +1,7 @@
 ﻿#ifndef ACTIVATIONFUNCTIONS_H
 #define ACTIVATIONFUNCTIONS_H
 #include "../core/enums.h"
-#include "statisticFunctions.h"
-#include <cmath>
 #include <math.h>
-#include <vector>
 
 // void BalanceWith(std::vector <float>& dataset, NeuralEnums::BalanceType
 // BalancingMethod)
@@ -101,4 +98,4 @@ inline void Assign_v(float *inputs, float *outputs, float *mask, int &start,
 float DifferentiateWith(float &x, NeuralEnums::ActivationFunction &function,
                         float *inputs, float *mask);
 
-#endif // ACTIVATIONFUNCTIONS_H
+#endif

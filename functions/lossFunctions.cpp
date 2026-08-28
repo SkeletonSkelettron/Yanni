@@ -2,11 +2,10 @@
 #include "../core/enums.h"
 #include <cmath>
 #include <math.h>
-#include <vector>
 
 float KullbackLeiblerDivergence(float *roHat, float &ro, int start, int end) {
   float sum = 0.0;
-  for (size_t i = start; i < end; i++)
+  for (int i = start; i < end; i++)
     sum += ro * log(ro / roHat[i]) + (1 - ro) * log((1 - ro) / (1 - roHat[i]));
   return sum;
 }
@@ -44,7 +43,7 @@ float MSL(float &output, float &target) {
 
 float MSL(float *output, float *target, int start, int end, int outputSize) {
   float Sum = 0;
-  for (unsigned long int i = start; i < end; i++) {
+  for (int i = start; i < end; i++) {
     Sum += MSL(target[i], output[i]) / outputSize;
   }
   return Sum;
@@ -65,6 +64,7 @@ float CalculateLossFunction(NeuralEnums::LossFunctionType &function,
     // case NeuralEnums::LossFunctionType::KullbackLeiblerDivergence: return
     // KullbackLeiblerDivergence(output, target);
   default:
+    return 0.0f;
     break;
   }
 }
@@ -78,6 +78,7 @@ float DifferentiateLossWith(float &output, float &target,
   case NeuralEnums::LossFunctionType::KullbackLeiblerDivergence:
     return KullbackLeiblerDivergenceDerivative(output, target);
   default:
+    return 0.0f;
     break;
   }
 }

@@ -44,8 +44,6 @@ Layer::Layer(int size, NeuralEnums::LayerType layerType,
 //---------------------------------------------------
 void Layer::CalculateInputsThreaded(float *prevLayerOutput, int prevLayerSize,
                                     float **prevLayerOutputBatch,
-
-                                    int &prevLayerIndexVectorSize,
                                     bool &training, int &numThreads,
                                     std::vector<WorkerThread *> &_workers) {
 
@@ -61,13 +59,12 @@ void Layer::CalculateInputsThreaded(float *prevLayerOutput, int prevLayerSize,
     for (int k = 0; k < numThreads; k++)
       _workers[k]->wait();
   } else {
-    int chunkSize =
-        IndexVectorSize / numThreads == 0 ? 1 : IndexVectorSize / numThreads;
-    int iterator = numThreads > IndexVectorSize ? IndexVectorSize : numThreads;
+    int chunkSize = Size / numThreads == 0 ? 1 : Size / numThreads;
+    int iterator = numThreads > Size ? Size : numThreads;
 
     for (int i = iterator; i--;) {
       int start = i * chunkSize;
-      int end = (i + 1) == iterator ? IndexVectorSize : (i + 1) * chunkSize;
+      int end = (i + 1) == iterator ? Size : (i + 1) * chunkSize;
 
       _workers[i]->doAsync(
           std::bind(&Layer::CalcInputsDelegate, this, prevLayerOutput,
@@ -83,7 +80,6 @@ void Layer::CalculateOutputsThreaded(int &numThreads, bool &training,
                                      bool &countingRohat,
                                      std::vector<WorkerThread *> &_workers) {
   if (BatchSize > 1 && training) {
-    bool miniBatch = BatchSize > 1 && training;
     int chunkSize = BatchSize / numThreads;
     int idx = 0;
 
@@ -95,13 +91,12 @@ void Layer::CalculateOutputsThreaded(int &numThreads, bool &training,
     for (int k = numThreads; k--;)
       _workers[k]->wait();
   } else {
-    int chunkSize =
-        IndexVectorSize / numThreads == 0 ? 1 : IndexVectorSize / numThreads;
-    int iterator = numThreads > IndexVectorSize ? IndexVectorSize : numThreads;
+    int chunkSize = Size / numThreads == 0 ? 1 : Size / numThreads;
+    int iterator = numThreads > Size ? Size : numThreads;
 
     for (int i = iterator; i--;) {
       int start = i * chunkSize;
-      int end = (i + 1) == iterator ? IndexVectorSize : (i + 1) * chunkSize;
+      int end = (i + 1) == iterator ? Size : (i + 1) * chunkSize;
       _workers[i]->doAsync(std::bind(&Layer::CalcOutputsDelegate, this, start,
                                      end, training, countingRohat));
     }
@@ -115,29 +110,35 @@ void Layer::CalcInputsDelegate(float *prevLayerOutput, int prevLayerSize,
                                int &start, int &end) {
   float result;
   int biasShift = UsingBias ? 1 : 0;
-  int k = 0, i = 0;
   if (BatchSize > 1 && training) {
     for (int batch = start; batch < end; batch++) {
-
-      for (int kk = IndexVectorSize; kk--;) {
-        k = IndexVector[kk];
+      for (int k = 0; k < Size; k++) {
         result = 0.0;
-        for (int ii = prevLayerIndexVectorSize; ii--;) {
-          i = prevLayerIndexes[ii];
-          result += prevLayerOutputBatch[batch][i] *
-                    Weights[(k - biasShift) * prevLayerSize + i];
+        if (UsingBias && k == 0)
+          continue;
+        if (Mask[k] == 0.0f) {
+          InputsBatch[batch][k] = 0.0f;
+          continue;
+        }
+        const int w = (k - biasShift) * prevLayerSize;
+        for (int i = 0; i < prevLayerSize; i++) {
+          result += prevLayerOutputBatch[batch][i] * Weights[w + i];
         }
         InputsBatch[batch][k] = result;
       }
     }
   } else {
-    for (int kk = start; kk < end; kk++) {
-      k = IndexVector[kk];
-      result = 0.0;
-      for (int ii = prevLayerIndexVectorSize; ii--;) {
-        i = prevLayerIndexes[ii];
-        result +=
-            prevLayerOutput[i] * Weights[(k - biasShift) * prevLayerSize + i];
+    for (int k = start; k < end; k++) {
+      if (UsingBias && k == 0)
+        continue;
+      result = 0.0f;
+      if (Mask[k] == 0.0f) {
+        Inputs[k] = 0.0f;
+        continue;
+      }
+      const int w = (k - biasShift) * prevLayerSize;
+      for (int i = 0; i < prevLayerSize; i++) {
+        result += prevLayerOutput[i] * Weights[w + i];
       }
       Inputs[k] = result;
     }
@@ -149,9 +150,8 @@ void Layer::CalcOutputsDelegate(int &start, int &end, bool &training,
                                 bool &countingRohat) {
   // TODO ჩასამატებელია SoftMax რეალიზაცია
   if (BatchSize > 1 && training) {
-    auto nonZeroMaskSize = Size - std::count(Mask, Mask + Size, 0.0f);
     for (int batch = start; batch < end; batch++) {
-      int vStart = 0, vEnd = nonZeroMaskSize;
+      int vStart = 0, vEnd = Size;
       ActivateWith(InputsBatch[batch], OutputsBatch[batch], Mask, vStart, vEnd,
                    ActivationFunction);
       if (UsingBias)

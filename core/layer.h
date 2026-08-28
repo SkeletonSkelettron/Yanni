@@ -26,7 +26,6 @@ public:
   float *LearningRates;
   float *Target;
   float **TargetsBatch;
-  int MaskSize;
   bool UsingBias;
   float *Mask;
   int BatchSize;
@@ -44,7 +43,8 @@ public:
   void CalcOutputsDelegate(int &start, int &end, bool &training,
                            bool &countingRohat);
   void CalculateInputsThreaded(float *prevLayerOutput, int prevLayerSize,
-                               float **prevLayerOutputBatch, int &numThreads,
+                               float **prevLayerOutputBatch, bool &training,
+                               int &numThreads,
                                std::vector<WorkerThread *> &_workers);
   void CalculateOutputsThreaded(int &numThreads, bool &training,
                                 bool &countingRohat,

@@ -31,4 +31,4 @@ void DeStandartizeLinearContract(float *dataset, int datasetSize, int *minMax);
 
 void Normalize(float *dataset, int datasetSize);
 
-#endif // STATISTICFUNCTIONS_H
+#endif

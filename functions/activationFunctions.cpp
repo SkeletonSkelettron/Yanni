@@ -1,10 +1,8 @@
 ﻿#include "activationFunctions.h"
 #include "../core/enums.h"
-#include "statisticFunctions.h"
 #include <cmath>
 #include <math.h>
 #include <stdexcept>
-#include <vector>
 
 const float PI2 = 6.2831853071795f;
 const float SQ2 = 1.4142135623730f;

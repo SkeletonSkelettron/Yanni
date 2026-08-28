@@ -2,7 +2,6 @@
 #define LOSSFUNCTIONS_H
 
 #include "../core/enums.h"
-#include <cmath>
 #include <math.h>
 
 float KullbackLeiblerDivergence(float *roHat, float &ro, int start, int end);
