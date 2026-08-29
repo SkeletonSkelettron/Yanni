@@ -1,4 +1,21 @@
 #include "workerThread.h"
+#if defined(__x86_64__) || defined(_M_X64)
+#include <immintrin.h>
+#define CPU_RELAX() _mm_pause()
+#else
+#define CPU_RELAX() ((void)0)
+#endif
+
+// ამდენი პაუზის შემდეგ ლოდინი აღარ არის "მოკლე" და ბირთვს ვუთმობთ,
+// რომ უქმი ნაკადი პროცესორს არ წვავდეს (მაგ. ეპოქებს შორის).
+static const int SPIN_LIMIT = 2000;
+
+void WorkerThread::idle(int &spins) {
+  if (++spins < SPIN_LIMIT)
+    CPU_RELAX();
+  else
+    std::this_thread::yield();
+}
 
 WorkerThread::WorkerThread() : isRunning(true), hasTask(false) {
   thread.reset(new std::thread([this] { this->startThread(); }));
@@ -7,43 +24,36 @@ WorkerThread::WorkerThread() : isRunning(true), hasTask(false) {
 WorkerThread::~WorkerThread() { stop(); }
 
 void WorkerThread::startThread() {
-  std::unique_lock<std::mutex> lock(mutex);
-  while (isRunning) {
-    cv.wait(lock, [this] { return hasTask || !isRunning; });
+  while (true) {
+    int spins = 0;
+    while (!hasTask.load(std::memory_order_acquire)) {
+      if (!isRunning.load(std::memory_order_relaxed))
+        return;
+      idle(spins);
+    }
 
-    if (!isRunning)
-      break;
+    task();
 
-    // Move task locally so doAsync can safely assign next task after we unlock
-    std::function<void()> t = std::move(task);
-    lock.unlock();
-
-    t();
-
-    lock.lock();
-    hasTask = false;
-    cv.notify_all();
+    // release: ამ მომენტამდე ჩაწერილი ყველა შედეგი wait()-ისთვის ხილვადია
+    hasTask.store(false, std::memory_order_release);
   }
 }
 
 void WorkerThread::doAsync(const std::function<void()> &t) {
-  std::lock_guard<std::mutex> lock(mutex);
+  // უსაფრთხოა უსინქრონოდ: გამომძახებელი აქ მხოლოდ წინა wait()-ის შემდეგ
+  // ხვდება, ანუ მუშა ნაკადი ამ დროს task-ს არ კითხულობს
   task = t;
-  hasTask = true;
-  cv.notify_one();
+  hasTask.store(true, std::memory_order_release);
 }
 
 void WorkerThread::wait() {
-  std::unique_lock<std::mutex> lock(mutex);
-  cv.wait(lock, [this] { return !hasTask; });
+  int spins = 0;
+  while (hasTask.load(std::memory_order_acquire))
+    idle(spins);
 }
 
 void WorkerThread::stop() {
-  {
-    std::lock_guard<std::mutex> lock(mutex);
-    isRunning = false;
-    cv.notify_one();
-  }
+  isRunning.store(false, std::memory_order_relaxed);
   if (thread && thread->joinable())
     thread->join();
 }

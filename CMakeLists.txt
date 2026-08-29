@@ -61,8 +61,16 @@ target_include_directories(Yanni PRIVATE
 target_link_libraries(Yanni PRIVATE nlohmann_json::nlohmann_json Threads::Threads)
 find_package(Threads REQUIRED)
 
+# მცურავი წერტილის თავისუფლება ვექტორიზაციისთვის.
+# -fassociative-math (და მისი წინაპირობები) რედუქციების ვექტორიზაციას ხსნის:
+#   for (i) sum += a[i]*b[i]   ->   8 ნაწილობრივი ჯამი AVX2 რეგისტრში
+# განზრახ არ არის -ffinite-math-only (ანუ სრული -ffast-math): ის
+# GetMaxIndex-ის std::isnan შემოწმებას ჩუმად false-ად აქცევდა.
+set(FASTMATH -fno-math-errno -fassociative-math -freciprocal-math
+             -fno-signed-zeros -fno-trapping-math -ffp-contract=fast)
+
 target_compile_options(Yanni PRIVATE
-    $<$<CXX_COMPILER_ID:GNU,Clang>:-O3 -march=native -Wall -Wextra -Wno-unused-parameter>
+    $<$<CXX_COMPILER_ID:GNU,Clang>:-O3 -march=native -Wall -Wextra -Wno-unused-parameter ${FASTMATH}>
 )
 
 if(USE_CUDA)
