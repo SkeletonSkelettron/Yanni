@@ -18,7 +18,7 @@ unsigned int in(std::ifstream &icin, unsigned int size) {
 
 void ReadMNISTMod(std::vector<std::vector<float>> &images,
                   std::vector<int> &labels, bool train) {
-  unsigned int num, magic, rows, cols;
+  unsigned int num, rows, cols;
   std::ifstream icin;
 
   namespace fs = std::filesystem;
@@ -27,8 +27,7 @@ void ReadMNISTMod(std::vector<std::vector<float>> &images,
   icin.open(exe_dir / (train ? "mnist/train-images.idx3-ubyte"
                              : "mnist/t10k-images.idx3-ubyte"),
             std::ios::binary);
-  magic = in(icin, 4), num = in(icin, 4), rows = in(icin, 4),
-  cols = in(icin, 4);
+  in(icin, 4), num = in(icin, 4), rows = in(icin, 4), cols = in(icin, 4);
   auto isOpen = icin.is_open();
   const int state = icin.rdstate();
   std::cout << "icin state" << state << std::endl;
@@ -41,8 +40,8 @@ void ReadMNISTMod(std::vector<std::vector<float>> &images,
   for (long int i = 0; i < num; i++) {
 
     img.resize(rows * cols);
-    for (int x = 0; x < rows; x++) {
-      for (int y = 0; y < cols; y++) {
+    for (unsigned int x = 0; x < rows; x++) {
+      for (unsigned int y = 0; y < cols; y++) {
         img[rows * x + y] = in(icin, 1);
       }
     }
@@ -55,7 +54,7 @@ void ReadMNISTMod(std::vector<std::vector<float>> &images,
                   : "mnist/t10k-labels.idx1-ubyte",
             std::ios::binary);
   long int num2_ = num;
-  magic = in(icin, 4), num2_ = in(icin, 4);
+  in(icin, 4), num2_ = in(icin, 4);
   for (long int i = 0; i < num; i++) {
     labels.push_back(in(icin, 1));
   }

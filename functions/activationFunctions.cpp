@@ -199,7 +199,7 @@ float exp1024(float x) {
 }
 
 float DifferentiateWith(float &x, NeuralEnums::ActivationFunction &function,
-                        float *inputs, float *mask) {
+                        float *inputs) {
   switch (function) {
   case (NeuralEnums::ActivationFunction::Sigmoid): {
     return SigmoidDerivative(x);

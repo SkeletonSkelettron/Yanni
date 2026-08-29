@@ -96,6 +96,6 @@ inline void Assign_v(float *inputs, float *outputs, float *mask, int &start,
                      int &end);
 
 float DifferentiateWith(float &x, NeuralEnums::ActivationFunction &function,
-                        float *inputs, float *mask);
+                        float *inputs);
 
 #endif

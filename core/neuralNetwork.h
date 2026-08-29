@@ -1,21 +1,16 @@
 #ifndef NEURALNETWORK_H
 #define NEURALNETWORK_H
-#include "../functions/activationFunctions.h"
 #include "../functions/gradientFunctions.h"
-#include "../functions/learningRateFunctions.h"
-#include "../functions/lossFunctions.h"
+#include "../functions/statisticFunctions.h"
+#include "activationFunctions.h"
 #include "enums.h"
 #include "layer.h"
+#include "lossFunctions.h"
 #include "workerThread.h"
-#include <condition_variable>
-#include <fstream>
-#include <iomanip>
+#include <algorithm>
+#include <cstdio>
 #include <math.h>
-#include <random>
-#include <string>
-#include <thread>
 #include <vector>
-
 class NeuralNetwork {
 public:
   int ThreadCount;
@@ -79,68 +74,4 @@ public:
 
 // Dump the assembled network (not the JSON) before training starts.
 void PrintNetworkInfo(NeuralNetwork &nn, size_t trainingSetSize);
-#endif // NEURALNETWORK_H
-
-/*#include <cublas_v2.h>
-#include <curand.h>
-#include <cassert>
-#include <cmath>
-#include <ctime>
-#include <iostream>
-#include <vector>
-
-
-// Forward declare the function in the .cu file
-template <typename T>
-std::vector<T> vectorActivationCUDA(std::vector<T>& inputs);
-
-template <typename T> std::vector<T> cudaCalculate(std::vector<T>& output,
-std::vector<T>& weightsTensor)
-{
-        int cols = output.size();
-        int rows = weightsTensor.size() / output.size();
-
-        std::vector<double> p;
-        p.resize(rows);
-
-        printf("\nStarting CUDA computation...");
-        ///double startTime = timenow();
-
-        // device pointers
-        double* d_weightsTensor, * d_output, * d_result;
-
-        cudaMalloc((void**)&d_weightsTensor, cols * rows * sizeof(T));
-        cudaMalloc((void**)&d_result, cols * sizeof(T));
-        cudaMalloc((void**)&d_output, cols * sizeof(T));
-        // might need to flatten A...
-        auto res0 = cublasSetVector(cols, sizeof(double), &(output[0]), 1,
-d_output, 1);
-        //cudaMemcpy(d_x0, &x0, N*sizeof(float), cudaMemcpyHostToDevice);
-        auto res1 = cublasSetMatrix(rows, cols, sizeof(double),
-&(weightsTensor[0]), rows, d_weightsTensor, rows);
-        //cudaCheckErrors("cuda memcpy of A or x0 fail");
-
-        double* temp;
-        temp = (double*)malloc(cols * sizeof(temp));
-
-        cublasHandle_t handle;
-        cublasCreate(&handle);
-
-        double alpha = 1.0L;
-        double beta = 0.0L;
-        auto res2 = cublasDgemv(handle, CUBLAS_OP_T, cols, rows , &alpha,
-d_weightsTensor, cols, d_output, 1, &beta, d_result, 1);
-
-        // cublasGetVector(N, sizeof(float), d_temp, 1, temp, 1);
-        cudaMemcpy(p.data(), d_result, rows * sizeof(T),
-cudaMemcpyDeviceToHost); cudaFree(d_result); cudaFree(d_weightsTensor);
-        cudaFree(d_output);
-        return p;
-
-}
-
-template <typename T> std::vector<T> cudaActivate(std::vector<T>& inputs)
-{
-        std::vector<T> res = vectorActivationCUDA(inputs);
-        return res;
-}*/
+#endif
