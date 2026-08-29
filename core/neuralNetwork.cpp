@@ -26,18 +26,38 @@ void NeuralNetwork::NeuralNetworkInit() {
 
 void NeuralNetwork::ShuffleDropoutsPlain() {
   for (int k = 1; k < LayersSize; k++) {
-    int biasShift = Layers[k].UsingBias ? 1 : 0;
-    if (Layers[k].MaskSize > 0 &&
-        Layers[k].LayerType == NeuralEnums::LayerType::HiddenLayer) {
-      int rnum = 0;
-      bool tmp;
-      for (int i = 0; i < Layers[k].Size; i++) {
-        rnum = rand() % Layers[k].Size;
-        tmp = Layers[k].Mask[i];
-        Layers[k].Mask[i] = Layers[k].Mask[rnum];
-        Layers[k].Mask[rnum] = tmp;
+    Layer &L = Layers[k];
+    if (L.DropOutSize <= 0.0f ||
+        L.LayerType != NeuralEnums::LayerType::HiddenLayer)
+      continue;
+
+    const int biasShift = L.UsingBias ? 1 : 0;
+    const int live = L.Size - biasShift;
+    const int threads = ThreadCount > live ? live : ThreadCount;
+    const int chunk = live / threads;
+
+    for (int t = 0; t < threads; t++) {
+      const int from = biasShift + t * chunk;
+      const int to = (t + 1 == threads) ? L.Size : from + chunk;
+      const int n = to - from;
+
+      int dropPer = (int)(n * L.DropOutSize);
+      if (dropPer >= n)
+        dropPer = n - 1; // ერთი მაინც გადარჩეს
+      const float scale = (float)n / (float)(n - dropPer);
+
+      for (int i = from; i < to; i++)
+        L.Mask[i] = scale;
+      for (int d = 0; d < dropPer; d++) {
+        int i;
+        do {
+          i = from + rand() % n;
+        } while (L.Mask[i] == 0.0f);
+        L.Mask[i] = 0.0f;
       }
     }
+    if (biasShift)
+      L.Mask[0] = 1.0f;
   }
 }
 
@@ -169,7 +189,8 @@ void NeuralNetwork::PropagateBackDelegate(int i, int start, int end) {
       int nextLayerBiasShift = Layers[i + 1].UsingBias ? 1 : 0;
       Layers[i].Outputs[j] = 0;
 
-      for (int l = 0; l < Layers[i + 1].Size; l++) {
+      // l = 0 შემდეგი ლეიერის bias-ია: მას წონების მწკრივი არ აქვს და დელტაც
+      for (int l = nextLayerBiasShift; l < Layers[i + 1].Size; l++) {
         Layers[i].Outputs[j] +=
             Layers[i + 1].Inputs[l] *
             Layers[i + 1]
@@ -354,28 +375,23 @@ void NeuralNetwork::CalculateWeightsBatch() {
 
       int start = l * chunkSize;
       int end = (l + 1) == iterator ? Size : (l + 1) * chunkSize;
-      start = (start == 0 && Layers[i].UsingBias ? 1 : start);
       workers[l]->doAsync(std::bind(&NeuralNetwork::CalculateWeightsBatchSub,
-                                    this, i,
-                                    Layers[i - 1].IndexVectorForNextLayer,
-                                    Layers[i - 1].IndexVectorForNextLayerSize,
-                                    start, end, Layers[i - 1].UsingBias));
+                                    this, i, start, end));
     }
     for (int k = 0; k < iterator; k++)
       workers[k]->wait();
   }
 }
-void NeuralNetwork::CalculateWeightsBatchSub(int i, int *prevLayerIndex,
-                                             int prevLayerIndexSize, int start,
-                                             int end, bool prevLayerUsingBias) {
+void NeuralNetwork::CalculateWeightsBatchSub(int i, int start, int end) {
   float gradient = 0;
   int numberIndex = 0;
-  int pLS = Layers[i - 1].Size;
-  int biasShift = Layers[i].UsingBias ? 1 : 0;
-  int p;
+  const int pLS = Layers[i - 1].Size;
+  const int biasShift = Layers[i].UsingBias ? 1 : 0;
+  start = start < biasShift ? biasShift : start;
   for (int j = start; j < end; j++) {
-    for (int pp = 0; pp < prevLayerIndexSize; pp++) {
-      p = prevLayerIndex[pp];
+    // მასკის შემოწმება არ სჭირდება: გამორთულ ნეირონზე გრადიენტი ისედაც ნულია,
+    // შემოწმების გარეშე კი ყველა უჯრა ზუსტად ერთხელ  ნულდება
+    for (int p = 0; p < pLS; p++) {
       numberIndex = pLS * (j - biasShift) + p;
       for (int t = 0; t < ThreadCount; t++) {
         gradient += Layers[i].GradientsBatch[t][numberIndex];
@@ -390,19 +406,11 @@ void NeuralNetwork::CalculateWeightsBatchSub(int i, int *prevLayerIndex,
   gradient = 0;
 }
 
+// dropout-ის გამორთვა: ტესტირებისას ყველა ნეირონი მონაწილეობს, სკალირების
+// გარეშე
 void NeuralNetwork::PrepareForTesting() {
-  for (int k = 0; k < LayersSize; k++) {
-    int biasShift = Layers[k].UsingBias ? 1 : 0;
-    Layers[k].IndexVectorSize = Layers[k].Size - biasShift;
-    Layers[k].IndexVector = new int[Layers[k].IndexVectorSize];
-    Layers[k].IndexVectorForNextLayer = new int[Layers[k].Size];
-    Layers[k].IndexVectorForNextLayerSize = Layers[k].Size;
-    Layers[k].IndexVectorForNextLayer[0] = 0;
-    for (int i = biasShift; i < Layers[k].Size; i++) {
-      Layers[k].IndexVector[i - biasShift] = i;
-      Layers[k].IndexVectorForNextLayer[i] = i;
-    }
-  }
+  for (int k = 0; k < LayersSize; k++)
+    std::fill(Layers[k].Mask, Layers[k].Mask + Layers[k].Size, 1.0f);
 }
 
 float NeuralNetwork::CalculateLoss(bool &training) {

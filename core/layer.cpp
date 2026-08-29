@@ -3,12 +3,13 @@
 
 Layer::Layer(int size, NeuralEnums::LayerType layerType,
              NeuralEnums::ActivationFunction activationFunction, float bias,
-             int batchSize) {
+             float dropOutSize, int batchSize) {
 
   UsingBias = !(bias == 0.0f);
   Size = size + (UsingBias ? 1 : 0);
   LayerType = layerType;
   ActivationFunction = activationFunction;
+  DropOutSize = dropOutSize;
   Mask = new float[Size]{};
 
   Inputs = new float[Size]{};

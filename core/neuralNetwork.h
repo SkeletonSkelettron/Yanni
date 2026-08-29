@@ -2,10 +2,10 @@
 #define NEURALNETWORK_H
 #include "../functions/gradientFunctions.h"
 #include "../functions/statisticFunctions.h"
-#include "activationFunctions.h"
+#include "../functions/activationFunctions.h"
 #include "enums.h"
 #include "layer.h"
-#include "lossFunctions.h"
+#include "../functions/lossFunctions.h"
 #include "workerThread.h"
 #include <algorithm>
 #include <cstdio>
@@ -55,9 +55,7 @@ public:
   void PropagateBackDelegateBatch(int start, int end, int threadNum);
   void ShuffleDropoutsPlain();
   void CalculateWeightsBatch();
-  void CalculateWeightsBatchSub(int i, int *prevLayerIndex,
-                                int prevLayerIndexSize, int start, int end,
-                                bool prevLayerUsingbias);
+  void CalculateWeightsBatchSub(int i, int start, int end);
   float CalculateLoss(bool &training);
   void CalculateLossSub(int start, int end, int klbstart, int klbend,
                         float &loss);

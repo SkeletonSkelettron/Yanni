@@ -29,13 +29,14 @@ public:
   bool UsingBias;
   float *Mask;
   int BatchSize;
+  float DropOutSize;
 
   NeuralEnums::ActivationFunction ActivationFunction;
   NeuralEnums::LayerType LayerType;
   Layer() {}
   Layer(int size, NeuralEnums::LayerType layerType,
         NeuralEnums::ActivationFunction activationFunction, float bias,
-        int batchSize = 1);
+        float dropOutSize = 0.0f, int batchSize = 1);
 
   void CalcInputsDelegate(float *prevLayerOutput, int prevLayerSize,
                           float **prevLayerOutputBatch, bool &training,
