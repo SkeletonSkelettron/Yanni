@@ -5,12 +5,15 @@
 #include <string>
 
 CliOptions gCli;
+std::string gEffectiveConfig;
 
 void PrintCliHelp(const char *exeName) {
   printf(
       "\n%s -- netConfig.json-ის პარამეტრების გადაფარვა ბრძანების ველიდან\n\n"
       "  --set KEY=VALUE [KEY=VALUE ...]   ერთი ან რამდენიმე პარამეტრი\n"
       "  --topology-only                   ქსელი აჩვენე და გამოდი\n"
+      "  -q, --quiet                       ტრენინგის მიმდინარეობა კონსოლში\n"
+      "                                    არ დაბეჭდო (yanni.log ივსება)\n"
       "  -h, --help                        ეს ტექსტი\n\n"
       "KEY ორი სახისაა:\n"
       "  Name              ზედა დონის პარამეტრი (LearningRate, ThreadCount...)\n"
@@ -33,6 +36,8 @@ CliOptions ParseCli(int argc, char **argv) {
       o.help = true;
     } else if (a == "--topology-only" || a == "--topology_only") {
       o.topologyOnly = true;
+    } else if (a == "--quiet" || a == "-q") {
+      o.quiet = true;
     } else if (a == "--set") {
       // ყველა მომდევნო KEY=VALUE ერთ --set-ს ეკუთვნის, სანამ ახალი
       // დროშა არ დაიწყება -- რამდენიმე ლეიერი ერთ ბრძანებაში რომ ეტეოდეს

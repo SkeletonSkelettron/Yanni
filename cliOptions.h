@@ -13,6 +13,7 @@
 // სკრიპტიდან, JSON-ის ხელით რედაქტირების გარეშე.
 struct CliOptions {
   bool topologyOnly = false; // ქსელი აჩვენე და გამოდი, ტრენინგის გარეშე
+  bool quiet = false;        // ტრენინგის მიმდინარეობა კონსოლში არ დაბეჭდო
   bool help = false;
   bool bad = false; // პარსინგის შეცდომა
   // key -> value. key არის "Name" (ზედა დონე) ან "<ლეიერი>.<Name>"
@@ -20,6 +21,11 @@ struct CliOptions {
 };
 
 extern CliOptions gCli;
+
+// netConfig.json გადაფარვების გამოყენების შემდეგ. ლოგში მთლიანად იწერება,
+// რომ ყოველი გაშვება თვითაღწერადი იყოს -- ვერც ერთი პარამეტრი ვერ
+// გამომრჩება, რადგან ეს თავად კონფიგია და არა მისი ხელით გადაწერა.
+extern std::string gEffectiveConfig;
 
 CliOptions ParseCli(int argc, char **argv);
 void PrintCliHelp(const char *exeName);

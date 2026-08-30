@@ -1,5 +1,8 @@
 ﻿#include "Yanni.h"
 #include "cliOptions.h"
+#include "logger.h"
+#include <ctime>
+#include <sstream>
 
 using namespace std;
 
@@ -192,6 +195,7 @@ void initNeUnetFromJson(NeuralNetwork &neuralNetwork) {
   // ბრძანების ველი JSON-ს გადააფარებს; ფაილი უცვლელი რჩება
   if (!ApplyOverrides(json, gCli))
     exit(1);
+  gEffectiveConfig = json.dump(4);
 
   neuralNetwork.ThreadCount = (size_t)json["ThreadCount"];
   neuralNetwork.LearningRate = json["LearningRate"];
@@ -320,11 +324,11 @@ void initNeUnetFromJson(NeuralNetwork &neuralNetwork) {
 void ReadData(std::vector<std::vector<float>> &trainingSet,
               std::vector<std::vector<float>> &testSet,
               std::vector<std::vector<float>> &labels,
-              std::vector<std::vector<float>> &testLabels) {
+              std::vector<std::vector<float>> &testLabels,
+              const DataSetInfo &ds) {
 
   std::vector<int> _labels;
   std::vector<int> _testlabels;
-  const DataSetInfo ds = ChooseDataSet();
   ReadMNISTMod(trainingSet, _labels, true, ds);
   ReadMNISTMod(testSet, _testlabels, false, ds);
 
@@ -373,10 +377,56 @@ void readDataAndTest() {
 
   // ქსელის ჩვენება ტრენინგის გარეშე: მონაცემების ჩატვირთვამდე ვჩერდებით,
   // რადგან ის რამდენიმე წამია და ტოპოლოგიისთვის საჭირო არაა
+  // ტოპოლოგიის ჩვენებას დატასეტი არ სჭირდება -- პრომპტამდე ვჩერდებით
   if (gCli.topologyOnly) {
     PrintNetworkInfo(neuralNetwork, 0);
     return;
   }
+
+  // დატასეტის არჩევა ცალკე ნაბიჯია: ის გაშვების გადაწყვეტილებაა,
+  // არა ჩატვირთვის დეტალი
+  const DataSetInfo ds = ChooseDataSet();
+  if (ds.classCount == 0)
+    return;
+
+  LogOpen("yanni.log");
+  {
+    const std::time_t now = std::time(nullptr);
+    char when[64];
+    std::strftime(when, sizeof when, "%Y-%m-%d %H:%M:%S",
+                  std::localtime(&now));
+    LogComment("yanni training log, started %s", when);
+    LogComment("dataset %s, %d classes", ds.name.c_str(), ds.classCount);
+
+    long total = 0;
+    for (int i = 1; i < neuralNetwork.LayersSize; i++)
+      total += (long)neuralNetwork.Layers[i - 1].Size *
+               (neuralNetwork.Layers[i].Size -
+                (neuralNetwork.Layers[i].UsingBias ? 1 : 0));
+    LogComment("parameters %ld, weights %.1f MB", total,
+               total * sizeof(float) / 1e6);
+    LogComment("");
+    LogComment("--- effective configuration: netConfig.json + command line ---");
+    // სტრიქონობრივად, რომ ყოველი ხაზი '#'-ით დაიწყოს და CSV-ის
+    // მკითხველმა მთელი ბლოკი გამოტოვოს
+    std::istringstream cfg(gEffectiveConfig);
+    std::string line;
+    while (std::getline(cfg, line))
+      LogComment("%s", line.c_str());
+    LogComment("");
+  }
+  LogLine("epoch,train_seconds,train_loss,trainset_seconds,trainset_accuracy,"
+          "testset_seconds,testset_accuracy");
+
+  // ასოებზე გადასვლისას ყველაზე ადვილი დასაშვები შეცდომა: netConfig.json-ში
+  // გამომავალი ლეიერი 10 დარჩა, დატასეტს კი 26 კლასი აქვს
+  const int outSize = neuralNetwork.Layers[neuralNetwork.LayersSize - 1].Size;
+  if (outSize != ds.classCount)
+    printf("\n  !! output layer has %d neurons but %s has %d classes\n"
+           "     set \"Size\": %d on the output layer in netConfig.json,\n"
+           "     or pass --set %d.Size=%d\n\n",
+           outSize, ds.name.c_str(), ds.classCount, ds.classCount,
+           neuralNetwork.LayersSize - 1, ds.classCount);
 
   cout << "start reading training+test data " << endl;
 
@@ -389,7 +439,7 @@ void readDataAndTest() {
   std::vector<std::vector<float>> labeledTarget;
   std::vector<std::vector<float>> testLabeledTarget;
 
-  ReadData(_trainingSet, _testSet, labeledTarget, testLabeledTarget);
+  ReadData(_trainingSet, _testSet, labeledTarget, testLabeledTarget, ds);
 
   if (_trainingSet.size() == 0) {
     return;
@@ -497,14 +547,16 @@ void readDataAndTest() {
             if (neuralNetwork.BatchSize == 1) {
               if (i % 1000 == 0 && i != 0) {
                 totalcounter += 1000;
-                cout << std::to_string(totalcounter) + "/" +
+                if (!gCli.quiet)
+                  cout << std::to_string(totalcounter) + "/" +
                             std::to_string(total * globalEpochs)
                      << "\r";
               }
             } else {
               totalcounter++;
               if (i % 100 == 0 && i != 0)
-                cout << std::to_string(totalcounter) + "/" +
+                if (!gCli.quiet)
+                  cout << std::to_string(totalcounter) + "/" +
                             std::to_string(total * globalEpochs /
                                            neuralNetwork.BatchSize)
                      << "\r";
@@ -545,14 +597,16 @@ void readDataAndTest() {
               if (i % 1000 == 0 && i != 0) {
                 totalcounter += 1000;
 
-                cout << std::to_string(totalcounter) + "/" +
+                if (!gCli.quiet)
+                  cout << std::to_string(totalcounter) + "/" +
                             std::to_string(total * globalEpochs)
                      << "\r";
               }
             } else {
               totalcounter++;
               if (i % 100 == 0 && i != 0)
-                cout << std::to_string(totalcounter) + "/" +
+                if (!gCli.quiet)
+                  cout << std::to_string(totalcounter) + "/" +
                             std::to_string(total * globalEpochs /
                                            neuralNetwork.BatchSize)
                      << "\r";
@@ -572,7 +626,8 @@ void readDataAndTest() {
 
         size_t counter = 0;
         size_t digitCounter = 0;
-        cout << std::to_string(g + 1) + " of " + std::to_string(globalEpochs) +
+        if (!gCli.quiet)
+          cout << std::to_string(g + 1) + " of " + std::to_string(globalEpochs) +
                     " done in " +
                     std::to_string(
                         std::chrono::duration<double>(endInside - beginInside)
@@ -581,6 +636,15 @@ void readDataAndTest() {
                     std::to_string(losses.size() > 0 ? losses[losses.size() - 1]
                                                      : 0)
              << endl;
+
+        // ერთი ეპოქა = ერთი სტრიქონი ლოგში; ტესტების შედეგებს ქვემოთ
+        // ვაგროვებთ და სტრიქონს ბოლოში ვწერთ
+        const double epochSeconds =
+            std::chrono::duration<double>(endInside - beginInside).count();
+        const float epochLoss =
+            losses.size() > 0 ? losses[losses.size() - 1] : 0.0f;
+        double trainsetSec = 0, testsetSec = 0;
+        double trainsetAcc = -1, testsetAcc = -1; // -1 = არ გაზომილა
 
         neuralNetwork.PrepareForTesting();
         float result = 0;
@@ -604,12 +668,16 @@ void readDataAndTest() {
             auto testComplete =
                 "training-set result: " + std::to_string(result);
             endInside = std::chrono::steady_clock::now();
-            cout << "...training set testing done in " +
+            if (!gCli.quiet)
+              cout << "...training set testing done in " +
                         std::to_string(std::chrono::duration<double>(
                                            endInside - beginInside)
                                            .count()) +
                         " seconds. Result: " + std::to_string(result)
                  << endl;
+            trainsetSec =
+                std::chrono::duration<double>(endInside - beginInside).count();
+            trainsetAcc = result;
           }
           if (neuralNetwork.Metrics == NeuralEnums::Metrics::TestSet ||
               neuralNetwork.Metrics == NeuralEnums::Metrics::Full) {
@@ -632,15 +700,29 @@ void readDataAndTest() {
             result = (float)counter / (float)digitCounter;
             auto testComplete2 = "; test-set result: " + std::to_string(result);
             endInside = std::chrono::steady_clock::now();
-            cout << "...testing set testing done in " +
+            if (!gCli.quiet)
+              cout << "...testing set testing done in " +
                         std::to_string(std::chrono::duration<double>(
                                            endInside - beginInside)
                                            .count()) +
                         " seconds. Result: " + std::to_string(result) +
                         ". loss: " + std::to_string(losses[losses.size() - 2])
                  << endl;
+            testsetSec =
+                std::chrono::duration<double>(endInside - beginInside).count();
+            testsetAcc = result;
           }
         }
+        // გაზომვის გარეშე დარჩენილი სვეტი ცარიელი რჩება, არა 0 --
+        // თორემ გრაფიკზე ნულოვან სიზუსტედ დაიხატებოდა
+        char tsAcc[32] = "", teAcc[32] = "";
+        if (trainsetAcc >= 0)
+          snprintf(tsAcc, sizeof tsAcc, "%.6f", trainsetAcc);
+        if (testsetAcc >= 0)
+          snprintf(teAcc, sizeof teAcc, "%.6f", testsetAcc);
+        LogLine("%zu,%.6f,%.8f,%.6f,%s,%.6f,%s", g + 1, epochSeconds, epochLoss,
+                trainsetSec, tsAcc, testsetSec, teAcc);
+
         if (neuralNetwork.LogLoss == NeuralEnums::LogLoss::Full ||
             neuralNetwork.LogLoss == NeuralEnums::LogLoss::Sparce) {
           std::ofstream oData;
@@ -660,6 +742,9 @@ void readDataAndTest() {
     }
 
     end = std::chrono::steady_clock::now();
+    LogComment("training done in %.3f seconds",
+               std::chrono::duration<double>(end - begin).count());
+    LogClose();
     cout << "training done in " +
                 std::to_string(
                     std::chrono::duration<double>(end - begin).count()) +

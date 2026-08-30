@@ -30,6 +30,7 @@ endif()
 set(SOURCES
     Yanni.cpp
     cliOptions.cpp
+    logger.cpp
     core/neuralNetwork.cpp
     core/layer.cpp
     core/workerThread.cpp
