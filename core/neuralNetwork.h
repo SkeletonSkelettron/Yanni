@@ -48,6 +48,9 @@ public:
   void NeuralNetworkInit();
   void InitializeWeights();
   void PrepareForTesting();
+  // ერთხელ ითვლება NeuralNetworkInit-ში: აქვს თუ არა რომელიმე ლეიერს dropout.
+  // თუ არა, ShuffleDropoutsPlain ყოველ პაკეტზე უქმად აღარ გამოიძახება.
+  bool UsingDropout = false;
   float PropagateForwardThreaded(bool training, bool countingRohat);
   void PropagateBackThreaded();
   void PropagateBackDelegate(int i, int start, int end);

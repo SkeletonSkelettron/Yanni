@@ -22,6 +22,12 @@ void NeuralNetwork::NeuralNetworkInit() {
                             ? Layers[LayersSize - 1].Size
                             : ThreadCount];
   lambda = 0.7;
+
+  UsingDropout = false;
+  for (int i = 0; i < LayersSize; i++)
+    if (Layers[i].DropOutSize > 0.0f &&
+        Layers[i].LayerType == NeuralEnums::LayerType::HiddenLayer)
+      UsingDropout = true;
 }
 
 void NeuralNetwork::ShuffleDropoutsPlain() {
@@ -105,8 +111,8 @@ void NeuralNetwork::InitializeWeights() {
 
 float NeuralNetwork::PropagateForwardThreaded(bool training,
                                               bool countingRohat) {
-  // if (training)
-  // ShuffleDropoutsPlain();
+  if (training && UsingDropout)
+    ShuffleDropoutsPlain();
   for (int k = 1; k < LayersSize - (countingRohat ? 1 : 0); k++) {
     Layers[k].CalculateInputsThreaded(Layers[k - 1].Outputs, Layers[k - 1].Size,
                                       Layers[k - 1].OutputsBatch, training,
@@ -496,6 +502,11 @@ float NeuralNetwork::CalculateLoss(bool &training) {
     }
     return result + regularizerCost * lambda / 2.0;
   }
+  // BatchSize == 1 && !training (ანუ ტესტირება) აქამდე არც ერთ ტოტში არ
+  // ხვდებოდა და ფუნქცია return-ის გარეშე მთავრდებოდა -- განუსაზღვრელი ქცევა.
+  // ტესტირებისას loss არ ითვლება, ამიტომ ცალსახად -1 ბრუნდება, ისევე
+  // როგორც PropagateForwardThreaded-ში LossCalculation != Full შემთხვევაში.
+  return -1.0f;
 }
 
 void NeuralNetwork::CalculateLossBatchSub(int start, int end, float &loss) {
@@ -705,8 +716,8 @@ void PrintNetworkInfo(NeuralNetwork &nn, size_t trainingSetSize) {
   printf("  batch %d | threads %d | lr %.4g (%s)\n", nn.BatchSize,
          nn.ThreadCount, nn.LearningRate, LrName(nn.LearningRateType));
 
-  printf("\n  %-3s %-7s %-9s %5s %4s  %-13s %10s\n", "#", "type", "act", "size",
-         "bias", "weights", "params");
+  printf("\n  %-3s %-7s %-9s %5s %4s %5s  %-13s %10s\n", "#", "type", "act",
+         "size", "bias", "drop", "weights", "params");
   long total = 0;
   for (int i = 0; i < nn.LayersSize; i++) {
     Layer &L = nn.Layers[i];
@@ -717,12 +728,16 @@ void PrintNetworkInfo(NeuralNetwork &nn, size_t trainingSetSize) {
     if (i)
       snprintf(shape, sizeof shape, "%d x %d", L.Size - bs,
                nn.Layers[i - 1].Size);
-    printf("  %-3d %-7s %-9s %5d %4s  %-13s %10ld\n", i, LayerName(L.LayerType),
-           ActName(L.ActivationFunction), L.Size, L.UsingBias ? "yes" : "no",
-           shape, w);
+    char drop[8] = "-";
+    if (L.DropOutSize > 0.0f)
+      snprintf(drop, sizeof drop, "%.0f%%", L.DropOutSize * 100.0f);
+    printf("  %-3d %-7s %-9s %5d %4s %5s  %-13s %10ld\n", i,
+           LayerName(L.LayerType), ActName(L.ActivationFunction), L.Size,
+           L.UsingBias ? "yes" : "no", drop, shape, w);
   }
-  printf("  %54s %10ld\n", "total parameters:", total);
-  printf("  %54s %9.1f MB\n", "weights memory:", total * sizeof(float) / 1e6);
+  printf("  %53s %10ld\n", "total parameters:", total);
+  printf("  %53s %10.1f MB\n", "weights memory:",
+         total * sizeof(float) / 1e6);
 
   // things that can be silently wrong
   printf("\n  checks:\n");
@@ -737,6 +752,14 @@ void PrintNetworkInfo(NeuralNetwork &nn, size_t trainingSetSize) {
   if (nn.BatchSize > 0 && trainingSetSize)
     printf("    %zu samples / batch %d = %zu weight updates per epoch\n",
            trainingSetSize, nn.BatchSize, trainingSetSize / nn.BatchSize);
+
+  for (int i = 0; i < nn.LayersSize; i++)
+    if (nn.Layers[i].DropOutSize > 0.0f &&
+        nn.Layers[i].LayerType != NeuralEnums::LayerType::HiddenLayer)
+      printf("    !! layer %d: drop %.0f%% is set on a %s, but dropout only\n"
+             "       applies to hidden layers -- it is silently ignored\n",
+             i, nn.Layers[i].DropOutSize * 100.0f,
+             LayerName(nn.Layers[i].LayerType));
 
   for (int i = 1; i < nn.LayersSize; i++)
     if (nn.Layers[i].WeightsSize == 0)

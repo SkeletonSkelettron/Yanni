@@ -18,27 +18,15 @@
             "Bias": 0,
             "ActivationFunction": "None"
         }, {
-            "Size": 800,
-            "Type": "HiddenLayer",
-            "DropuOutSize": 0,
-            "Bias": 1,
-            "ActivationFunction": "Sigmoid"
-        }, {
             "Size": 500,
             "Type": "HiddenLayer",
-            "DropuOutSize": 0,
+            "DropuOutSize": 0.5,
             "Bias": 1,
             "ActivationFunction": "Sigmoid"
         }, {
-            "Size": 250,
+            "Size": 200,
             "Type": "HiddenLayer",
-            "DropuOutSize": 0,
-            "Bias": 1,
-            "ActivationFunction": "Sigmoid"
-        }, {
-            "Size": 100,
-            "Type": "HiddenLayer",
-            "DropuOutSize": 0,
+            "DropuOutSize": 0.2,
             "Bias": 1,
             "ActivationFunction": "Sigmoid"
         }, {
