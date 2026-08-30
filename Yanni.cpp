@@ -385,7 +385,7 @@ void readDataAndTest() {
 
   // დატასეტის არჩევა ცალკე ნაბიჯია: ის გაშვების გადაწყვეტილებაა,
   // არა ჩატვირთვის დეტალი
-  const DataSetInfo ds = ChooseDataSet();
+  const DataSetInfo ds = ChooseDataSet(gCli.dataset);
   if (ds.classCount == 0)
     return;
 

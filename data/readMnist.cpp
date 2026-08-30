@@ -2,6 +2,8 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <cctype>
+#include <cstdlib>
 #include <unistd.h>
 #include <vector>
 
@@ -41,6 +43,33 @@ static const DataSetInfo kKnown[] = {
      "emnist-balanced-test-labels-idx1-ubyte", true, 47},
 };
 
+// ერთი და იგივე დატასეტი ორი სახელით ვრცელდება: MNIST წერტილით
+// (train-images.idx3-ubyte), EMNIST ტირით (…-train-images-idx3-ubyte).
+// გამყოფს idx-ის წინ ვცვლით და ორივეს ვცდით -- მხოლოდ ამ ორს.
+static std::string FlipSeparator(const std::string &name) {
+  const size_t p = name.rfind("idx");
+  if (p == std::string::npos || p == 0)
+    return name;
+  std::string alt = name;
+  if (alt[p - 1] == '-')
+    alt[p - 1] = '.';
+  else if (alt[p - 1] == '.')
+    alt[p - 1] = '-';
+  else
+    return name;
+  return alt;
+}
+
+// არსებული ფაილის გზა, ან ცარიელი, თუ ვერც ერთი ვარიანტი ვერ მოიძებნა
+static fs::path Resolve(const fs::path &dir, const std::string &name) {
+  if (fs::exists(dir / name))
+    return dir / name;
+  const std::string alt = FlipSeparator(name);
+  if (alt != name && fs::exists(dir / alt))
+    return dir / alt;
+  return {};
+}
+
 // IDX სურათების სათაურიდან ჩანაწერების რაოდენობა; 0 თუ ფაილი ვერ წაიკითხა
 static long CountOf(const fs::path &p) {
   std::ifstream f(p, std::ios::binary);
@@ -54,31 +83,89 @@ std::vector<DataSetInfo> AvailableDataSets() {
   std::vector<DataSetInfo> found;
   const fs::path dir = DataDir();
   for (const DataSetInfo &d : kKnown) {
-    if (fs::exists(dir / d.trainImages) && fs::exists(dir / d.trainLabels) &&
-        fs::exists(dir / d.testImages) && fs::exists(dir / d.testLabels))
+    if (!Resolve(dir, d.trainImages).empty() &&
+        !Resolve(dir, d.trainLabels).empty() &&
+        !Resolve(dir, d.testImages).empty() &&
+        !Resolve(dir, d.testLabels).empty())
       found.push_back(d);
   }
   return found;
 }
 
-DataSetInfo ChooseDataSet() {
+std::string DataSetSlug(const std::string &name) {
+  std::string out;
+  for (char c : name)
+    out += (c == ' ') ? '-' : (char)std::tolower((unsigned char)c);
+  return out;
+}
+
+static void PrintSets(const std::vector<DataSetInfo> &sets,
+                      const fs::path &dir) {
+  for (size_t i = 0; i < sets.size(); i++)
+    printf("  %zu) %-16s %-16s %7ld train / %6ld test, %d classes\n", i + 1,
+           DataSetSlug(sets[i].name).c_str(), sets[i].name.c_str(),
+           CountOf(Resolve(dir, sets[i].trainImages)),
+           CountOf(Resolve(dir, sets[i].testImages)), sets[i].classCount);
+}
+
+DataSetInfo ChooseDataSet(const std::string &requested) {
   std::vector<DataSetInfo> sets = AvailableDataSets();
 
   if (sets.empty()) {
     std::cout << "no dataset found in " << DataDir() << std::endl;
     return DataSetInfo{"", "", "", "", "", false, 0};
   }
+  const fs::path dir = DataDir();
+
+  if (!requested.empty()) {
+    // რიგითი ნომერი -- იგივე, რაც სიაში ჩანს
+    char *end = nullptr;
+    const long n = strtol(requested.c_str(), &end, 10);
+    if (*end == '\0' && n >= 1 && n <= (long)sets.size()) {
+      std::cout << "dataset: " << sets[n - 1].name << std::endl;
+      return sets[n - 1];
+    }
+
+    // სახელი: ჯერ ზუსტი დამთხვევა, მერე ერთმნიშვნელოვანი პრეფიქსი.
+    // "emnist" ორივე EMNIST-ს დაემთხვევა, ამიტომ ბუნდოვნებას ვწყვეტთ
+    // და არ ვირჩევთ თვითნებურად
+    const std::string want = DataSetSlug(requested);
+    int exact = -1, prefix = -1, prefixCount = 0;
+    for (size_t i = 0; i < sets.size(); i++) {
+      const std::string slug = DataSetSlug(sets[i].name);
+      if (slug == want)
+        exact = (int)i;
+      else if (slug.compare(0, want.size(), want) == 0) {
+        prefix = (int)i;
+        prefixCount++;
+      }
+    }
+    if (exact >= 0) {
+      std::cout << "dataset: " << sets[exact].name << std::endl;
+      return sets[exact];
+    }
+    if (prefixCount == 1) {
+      std::cout << "dataset: " << sets[prefix].name << std::endl;
+      return sets[prefix];
+    }
+    if (prefixCount > 1)
+      printf("\n!! --dataset '%s' matches more than one:\n\n",
+             requested.c_str());
+    else
+      printf("\n!! --dataset '%s' matches nothing. available:\n\n",
+             requested.c_str());
+    PrintSets(sets, dir);
+    printf("\n");
+    exit(1);
+  }
+
   if (sets.size() == 1) {
     std::cout << "dataset: " << sets[0].name << std::endl;
     return sets[0];
   }
 
-  const fs::path dir = DataDir();
   std::cout << "\nseveral datasets found:\n" << std::endl;
-  for (size_t i = 0; i < sets.size(); i++)
-    printf("  %zu) %-18s %7ld train / %6ld test, %d classes\n", i + 1,
-           sets[i].name.c_str(), CountOf(dir / sets[i].trainImages),
-           CountOf(dir / sets[i].testImages), sets[i].classCount);
+  PrintSets(sets, dir);
 
   // არაინტერაქტიულ გაშვებაზე კითხვა უაზროა და პროგრამა გაიჭედებოდა
   if (!isatty(fileno(stdin))) {
@@ -111,8 +198,8 @@ void ReadMNISTMod(std::vector<std::vector<float>> &images,
     return;
 
   const fs::path dir = DataDir();
-  const fs::path imgPath = dir / (train ? ds.trainImages : ds.testImages);
-  const fs::path labPath = dir / (train ? ds.trainLabels : ds.testLabels);
+  const fs::path imgPath = Resolve(dir, train ? ds.trainImages : ds.testImages);
+  const fs::path labPath = Resolve(dir, train ? ds.trainLabels : ds.testLabels);
 
   std::ifstream icin(imgPath, std::ios::binary);
   // შემოწმება სათაურის წაკითხვამდე: დახურული ნაკადიდან in() ნულებს

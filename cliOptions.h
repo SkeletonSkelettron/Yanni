@@ -14,6 +14,7 @@
 struct CliOptions {
   bool topologyOnly = false; // ქსელი აჩვენე და გამოდი, ტრენინგის გარეშე
   bool quiet = false;        // ტრენინგის მიმდინარეობა კონსოლში არ დაბეჭდო
+  std::string dataset;       // ცარიელი = იკითხე; სხვა შემთხვევაში სახელი ან ნომერი
   bool help = false;
   bool bad = false; // პარსინგის შეცდომა
   // key -> value. key არის "Name" (ზედა დონე) ან "<ლეიერი>.<Name>"

@@ -14,6 +14,9 @@ void PrintCliHelp(const char *exeName) {
       "  --topology-only                   ქსელი აჩვენე და გამოდი\n"
       "  -q, --quiet                       ტრენინგის მიმდინარეობა კონსოლში\n"
       "                                    არ დაბეჭდო (yanni.log ივსება)\n"
+      "  --dataset NAME|N                  დატასეტი კითხვის გარეშე; სახელი\n"
+      "                                    პატარა ასოებით, ხარვეზი ტირედ\n"
+      "                                    (mnist, emnist-digits), ან ნომერი\n"
       "  -h, --help                        ეს ტექსტი\n\n"
       "KEY ორი სახისაა:\n"
       "  Name              ზედა დონის პარამეტრი (LearningRate, ThreadCount...)\n"
@@ -38,6 +41,13 @@ CliOptions ParseCli(int argc, char **argv) {
       o.topologyOnly = true;
     } else if (a == "--quiet" || a == "-q") {
       o.quiet = true;
+    } else if (a == "--dataset") {
+      if (i + 1 < argc)
+        o.dataset = argv[++i];
+      else {
+        printf("!! --dataset needs a name or a number\n");
+        o.bad = true;
+      }
     } else if (a == "--set") {
       // ყველა მომდევნო KEY=VALUE ერთ --set-ს ეკუთვნის, სანამ ახალი
       // დროშა არ დაიწყება -- რამდენიმე ლეიერი ერთ ბრძანებაში რომ ეტეოდეს

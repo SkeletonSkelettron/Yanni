@@ -23,9 +23,16 @@ unsigned int in(std::ifstream &icin, unsigned int size);
 // mnist/ დირექტორიაში ნაპოვნი დატასეტები, რომელთაც ოთხივე ფაილი აქვთ
 std::vector<DataSetInfo> AvailableDataSets();
 
-// ერთი თუ იპოვა -- მას აბრუნებს ხმაურის გარეშე; რამდენიმე -- ეკითხება.
-// არაინტერაქტიულ გაშვებაზე (მილი, სკრიპტი) პირველს ირჩევს.
-DataSetInfo ChooseDataSet();
+// ჩვენებითი სახელი ბრძანების ველისთვის: პატარა ასოები, ხარვეზი -> ტირე.
+// "EMNIST digits" -> "emnist-digits". ცალკე ველად არ ვინახავთ, რომ ორი
+// სახელი ვერასდროს დაშორდეს ერთმანეთს.
+std::string DataSetSlug(const std::string &name);
+
+// requested ცარიელი თუ არაა, პრომპტის ნაცვლად მას ეძებს: ან რიგით ნომერს
+// (სიაში ჩანს), ან სახელს -- ზუსტად, ან ერთმნიშვნელოვან პრეფიქსად.
+// ცარიელზე: ერთი დატასეტი -- ხმაურის გარეშე; რამდენიმე -- ეკითხება;
+// არაინტერაქტიულ გაშვებაზე პირველს ირჩევს.
+DataSetInfo ChooseDataSet(const std::string &requested = "");
 
 void ReadMNISTMod(std::vector<std::vector<float>> &images,
                   std::vector<int> &labels, bool train,
