@@ -701,8 +701,6 @@ static const char *LrName(NeuralEnums::LearningRateType t) {
     return "AMSGrad";
   case R::Cyclic:
     return "Cyclic";
-  case R::GuraMethod:
-    return "GuraMethod";
   case R::Nadam:
     return "Nadam";
   case R::RMSProp:

@@ -10,6 +10,7 @@
     "Gradient": "Static",
     "Metrics": "Test",
     "LogLoss": "Full",
+    "AutoEncoderType": "None",
     "LossCalculation": "Full",
     "Layers": [{
             "Size": 784,

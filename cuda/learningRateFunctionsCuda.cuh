@@ -36,8 +36,6 @@
 //		//	return RMSProp(nn.Layers[iterator].GradientsLR,
 // gradient, j) * gradient;
 //		//else if (nn.LearningRateType ==
-// NeuralEnums::LearningRateType::GuraMethod)
-//		//	return GuraMethod(nn.Layers[iterator].GradientsLR,
 // nn.Layers[iterator].LearningRates, gradient, j, nn.LearningRate) * gradient;
 //		switch (nn.LearningRateType)
 //		{
@@ -60,9 +58,7 @@
 //			//case NeuralEnums::LearningRateType::RMSProp:
 //			//	return RMSProp(nn.Layers[iterator].GradientsLR,
 // gradient, j) * gradient;
-//			//case NeuralEnums::LearningRateType::GuraMethod:
 //			//	return
-// GuraMethod(nn.Layers[iterator].GradientsLR,
 // nn.Layers[iterator].LearningRates, gradient, j, nn.LearningRate) * gradient;
 // default:
 //		{

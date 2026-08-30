@@ -52,10 +52,9 @@ enum class LearningRateType {
   AdaMax = 4,
   AMSGrad = 5,
   Cyclic = 6,
-  GuraMethod = 7,
-  Nadam = 8,
-  RMSProp = 9,
-  Static = 10,
+  Nadam = 7,
+  RMSProp = 8,
+  Static = 9,
 };
 
 enum class GradientType {

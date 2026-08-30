@@ -29,6 +29,7 @@ endif()
 # ── Sources ────────────────────────────────────────────────────────────────────
 set(SOURCES
     Yanni.cpp
+    cliOptions.cpp
     core/neuralNetwork.cpp
     core/layer.cpp
     core/workerThread.cpp

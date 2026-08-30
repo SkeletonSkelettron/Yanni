@@ -293,9 +293,7 @@ __device__ struct NeuralNetworkCuda {
     // iterator); else if (nn.LearningRateType ==
     // NeuralEnums::LearningRateType::RMSProp) 	return
     // RMSProp(nn.Layers[iterator].GradientsLR, gradient, j) * gradient; else if
-    // (nn.LearningRateType == NeuralEnums::LearningRateType::GuraMethod)
     // return
-    // GuraMethod(nn.Layers[iterator].GradientsLR,
     // nn.Layers[iterator].LearningRates, gradient, j, nn.LearningRate) *
     // gradient;
     switch (LearningRateType) {
@@ -315,8 +313,6 @@ __device__ struct NeuralNetworkCuda {
       //	return AdamMod(nn, gradient, j, iterator);
       // case NeuralEnums::LearningRateType::RMSProp:
       //	return RMSProp(nn.Layers[iterator].GradientsLR, gradient, j) *
-      // gradient; case NeuralEnums::LearningRateType::GuraMethod: 	return
-      // GuraMethod(nn.Layers[iterator].GradientsLR,
       // nn.Layers[iterator].LearningRates, gradient, j, nn.LearningRate) *
       // gradient;
     default: {

@@ -1,4 +1,5 @@
 ﻿#include "Yanni.h"
+#include "cliOptions.h"
 
 using namespace std;
 
@@ -153,6 +154,32 @@ void testNet() {
     losses.push_back(loss);
   }
 }
+// კონფიგის სტრიქონს enum-ად აქცევს.
+//
+// ადრე თითოეული ველი if-ების ჯაჭვით იპარსებოდა, else-ის გარეშე: უცნობი
+// სტრიქონი ველს საერთოდ არ ანიჭებდა და იქ კონსტრუქტორის ნაგავი რჩებოდა,
+// ან ჩუმად None ხდებოდა. ბრძანების ველიდან ერთი შეცდომილი ასო საკმარისი
+// იყო, რომ ქსელი უაქტივაციოდ დარჩენილიყო.
+template <class E>
+static E ParseEnum(const char *field, const std::string &text,
+                   std::initializer_list<std::pair<const char *, E>> table) {
+  for (const auto &kv : table)
+    if (text == kv.first)
+      return kv.second;
+  printf("!! %s: unknown value '%s'\n   valid: ", field, text.c_str());
+  for (const auto &kv : table)
+    printf("%s ", kv.first);
+  printf("\n");
+  exit(1);
+}
+
+static std::string JsonStr(const nlohmann::json &j, const char *key,
+                           const char *fallback) {
+  if (!j.contains(key) || j[key].is_null())
+    return fallback;
+  return j[key].get<std::string>();
+}
+
 void initNeUnetFromJson(NeuralNetwork &neuralNetwork) {
   std::ifstream ifs("netConfig.json");
   if (!ifs.is_open())
@@ -162,140 +189,125 @@ void initNeUnetFromJson(NeuralNetwork &neuralNetwork) {
                       (std::istreambuf_iterator<char>()));
   nlohmann::json json = nlohmann::json::parse(content);
 
+  // ბრძანების ველი JSON-ს გადააფარებს; ფაილი უცვლელი რჩება
+  if (!ApplyOverrides(json, gCli))
+    exit(1);
+
   neuralNetwork.ThreadCount = (size_t)json["ThreadCount"];
   neuralNetwork.LearningRate = json["LearningRate"];
 
-  auto lrType = json["LearningRateType"];
-  auto balance = json["Balance"];
-  auto lossFunction = json["LossFunction"];
-  auto gradient = json["Gradient"];
-  auto metrics = json["Metrics"];
-  auto losscalc = json["LossCalculation"];
-  auto autoEncoderType = json["AutoEncoderType"];
-  auto logLoss = json["LogLoss"];
+  using AE = NeuralEnums::AutoEncoderType;
+  using BT = NeuralEnums::BalanceType;
+  using GT = NeuralEnums::GradientType;
+  using LC = NeuralEnums::LossCalculation;
+  using LL = NeuralEnums::LogLoss;
+  using LF = NeuralEnums::LossFunctionType;
+  using LR = NeuralEnums::LearningRateType;
+  using MT = NeuralEnums::Metrics;
+  using NT = NeuralEnums::NetworkType;
+
   neuralNetwork.BatchSize = (int)json["BatchSize"];
   neuralNetwork.Cuda = (bool)json["Cuda"];
 
-  auto networkType = json["Type"];
+  neuralNetwork.Type = ParseEnum<NT>("Type", JsonStr(json, "Type", "Normal"),
+                                     {{"Normal", NT::Normal},
+                                      {"AutoEncoder", NT::AutoEncoder}});
 
-  if (networkType == "Normal")
-    neuralNetwork.Type = NeuralEnums::NetworkType::Normal;
-  if (networkType == "AutoEncoder")
-    neuralNetwork.Type = NeuralEnums::NetworkType::AutoEncoder;
+  neuralNetwork.Metrics =
+      ParseEnum<MT>("Metrics", JsonStr(json, "Metrics", "None"),
+                    {{"None", MT::None},
+                     {"Test", MT::TestSet},
+                     {"Full", MT::Full}});
 
-  if (metrics == "None")
-    neuralNetwork.Metrics = NeuralEnums::Metrics::None;
-  if (metrics == "Test")
-    neuralNetwork.Metrics = NeuralEnums::Metrics::TestSet;
-  if (metrics == "Full")
-    neuralNetwork.Metrics = NeuralEnums::Metrics::Full;
+  neuralNetwork.LogLoss =
+      ParseEnum<LL>("LogLoss", JsonStr(json, "LogLoss", "None"),
+                    {{"None", LL::None},
+                     {"Sparce", LL::Sparce},
+                     {"Full", LL::Full}});
 
-  if (logLoss == "None")
-    neuralNetwork.LogLoss = NeuralEnums::LogLoss::None;
-  if (logLoss == "Sparce")
-    neuralNetwork.LogLoss = NeuralEnums::LogLoss::Sparce;
-  if (logLoss == "Full")
-    neuralNetwork.LogLoss = NeuralEnums::LogLoss::Full;
+  // ადრე else მხოლოდ ბოლო if-ს ეკვროდა, ე.ი. Contractive, Denoising და
+  // Sparce დაყენების მიუხედავად მაშინვე None-ით გადაიწერებოდა
+  neuralNetwork.AutoEncoderType =
+      ParseEnum<AE>("AutoEncoderType", JsonStr(json, "AutoEncoderType", "None"),
+                    {{"UnderComplete", AE::UnderComplete},
+                     {"Sparce", AE::Sparce},
+                     {"Denoising", AE::Denoising},
+                     {"Contractive", AE::Contractive},
+                     {"Variational", AE::Variational},
+                     {"None", AE::None}});
 
-  if (autoEncoderType == "Contractive")
-    neuralNetwork.AutoEncoderType = NeuralEnums::AutoEncoderType::Contractive;
-  if (autoEncoderType == "Denoising")
-    neuralNetwork.AutoEncoderType = NeuralEnums::AutoEncoderType::Denoising;
-  if (autoEncoderType == "Sparce")
-    neuralNetwork.AutoEncoderType = NeuralEnums::AutoEncoderType::Sparce;
-  if (autoEncoderType == "UnderComplete")
-    neuralNetwork.AutoEncoderType = NeuralEnums::AutoEncoderType::UnderComplete;
-  else
-    neuralNetwork.AutoEncoderType = NeuralEnums::AutoEncoderType::None;
+  neuralNetwork.LossCalculation =
+      ParseEnum<LC>("LossCalculation", JsonStr(json, "LossCalculation", "None"),
+                    {{"None", LC::None}, {"Full", LC::Full}});
 
-  if (losscalc == "None")
-    neuralNetwork.LossCalculation = NeuralEnums::LossCalculation::None;
-  if (losscalc == "Full")
-    neuralNetwork.LossCalculation = NeuralEnums::LossCalculation::Full;
+  // Cyclic ადრე პატარა ასოთი ("cyclic") იწერებოდა, ე.ი. enum-ის სახელით
+  // მითითება არ მუშაობდა; AdaMax, AMSGrad და Nadam საერთოდ არ იპარსებოდა
+  neuralNetwork.LearningRateType = ParseEnum<LR>(
+      "LearningRateType", JsonStr(json, "LearningRateType", "Static"),
+      {{"Static", LR::Static},
+       {"AdaDelta", LR::AdaDelta},
+       {"AdaGrad", LR::AdaGrad},
+       {"Adam", LR::Adam},
+       {"AdamMod", LR::AdamMod},
+       {"AdaMax", LR::AdaMax},
+       {"AMSGrad", LR::AMSGrad},
+       {"Cyclic", LR::Cyclic},
+       {"Nadam", LR::Nadam},
+       {"RMSProp", LR::RMSProp}});
 
-  if (lrType == "Static")
-    neuralNetwork.LearningRateType = NeuralEnums::LearningRateType::Static;
-  if (lrType == "AdaDelta")
-    neuralNetwork.LearningRateType = NeuralEnums::LearningRateType::AdaDelta;
-  if (lrType == "AdaGrad")
-    neuralNetwork.LearningRateType = NeuralEnums::LearningRateType::AdaGrad;
-  if (lrType == "Adam")
-    neuralNetwork.LearningRateType = NeuralEnums::LearningRateType::Adam;
-  if (lrType == "AdamMod")
-    neuralNetwork.LearningRateType = NeuralEnums::LearningRateType::AdamMod;
-  if (lrType == "cyclic")
-    neuralNetwork.LearningRateType = NeuralEnums::LearningRateType::Cyclic;
-  if (lrType == "RMSProp")
-    neuralNetwork.LearningRateType = NeuralEnums::LearningRateType::RMSProp;
-  if (lrType == "GuraMethod")
-    neuralNetwork.LearningRateType = NeuralEnums::LearningRateType::GuraMethod;
+  neuralNetwork.BalanceType = ParseEnum<BT>(
+      "Balance", JsonStr(json, "Balance", "None"),
+      {{"None", BT::None},
+       {"GaussianStandartization", BT::GaussianStandartization},
+       {"Normalization", BT::Normalization},
+       {"NormalDistrubution", BT::NormalDistrubution}});
 
-  if (balance == "GaussianStandartization")
-    neuralNetwork.BalanceType =
-        NeuralEnums::BalanceType::GaussianStandartization;
-  if (balance == "NormalDistrubution")
-    neuralNetwork.BalanceType = NeuralEnums::BalanceType::NormalDistrubution;
-  if (balance == "Normalization")
-    neuralNetwork.BalanceType = NeuralEnums::BalanceType::Normalization;
-  if (balance == "None")
-    neuralNetwork.BalanceType = NeuralEnums::BalanceType::None;
+  // მხოლოდ ეს სამია რეალიზებული lossFunctions.cpp-ში; enum-ის დანარჩენი
+  // წევრები DifferentiateLossWith-ში default-ზე გადიან და ნულს აბრუნებენ,
+  // ანუ ქსელი საერთოდ ვერ ისწავლიდა
+  neuralNetwork.LossFunctionType = ParseEnum<LF>(
+      "LossFunction", JsonStr(json, "LossFunction", "MeanSquaredError"),
+      {{"MeanSquaredError", LF::MeanSquaredError},
+       {"BinaryCrossentropy", LF::BinaryCrossentropy},
+       {"KullbackLeiblerDivergence", LF::KullbackLeiblerDivergence}});
 
-  if (lossFunction == "BinaryCrossentropy")
-    neuralNetwork.LossFunctionType =
-        NeuralEnums::LossFunctionType::BinaryCrossentropy;
-  if (lossFunction == "MeanSquaredError")
-    neuralNetwork.LossFunctionType =
-        NeuralEnums::LossFunctionType::MeanSquaredError;
-  if (lossFunction == "KullbackLeiblerDivergence")
-    neuralNetwork.LossFunctionType =
-        NeuralEnums::LossFunctionType::KullbackLeiblerDivergence;
-
-  if (gradient == "Momentum")
-    neuralNetwork.GradientType = NeuralEnums::GradientType::Momentum;
-  if (gradient == "Static")
-    neuralNetwork.GradientType = NeuralEnums::GradientType::Static;
+  neuralNetwork.GradientType =
+      ParseEnum<GT>("Gradient", JsonStr(json, "Gradient", "Static"),
+                    {{"Static", GT::Static}, {"Momentum", GT::Momentum}});
 
   neuralNetwork.Layers = new Layer[json["Layers"].size()];
   size_t counter = 0;
   neuralNetwork.LayersSize = json["Layers"].size();
   for (auto &layer : json["Layers"]) {
-    NeuralEnums::LayerType LayerType;
-    NeuralEnums::ActivationFunction ActivationFunctionType;
-    auto activationFunction = layer["ActivationFunction"];
-    auto layerType = layer["Type"];
+    using AF = NeuralEnums::ActivationFunction;
+    using LT = NeuralEnums::LayerType;
 
-    float DropuOutSize = layer["DropuOutSize"];
-    float bias = layer["Bias"];
-    size_t size = layer["Size"];
-    if (activationFunction == "MReLU")
-      ActivationFunctionType = NeuralEnums::ActivationFunction::MReLU;
-    else if (activationFunction == "None")
-      ActivationFunctionType = NeuralEnums::ActivationFunction::None;
-    else if (activationFunction == "ReLU")
-      ActivationFunctionType = NeuralEnums::ActivationFunction::ReLU;
-    else if (activationFunction == "Sigmoid")
-      ActivationFunctionType = NeuralEnums::ActivationFunction::Sigmoid;
-    else if (activationFunction == "SoftMax")
-      ActivationFunctionType = NeuralEnums::ActivationFunction::SoftMax;
-    else if (activationFunction == "Tanh")
-      ActivationFunctionType = NeuralEnums::ActivationFunction::Tanh;
-    else if (activationFunction == "GeLU")
-      ActivationFunctionType = NeuralEnums::ActivationFunction::GeLU;
-    else if (activationFunction == "SoftPlus")
-      ActivationFunctionType = NeuralEnums::ActivationFunction::SoftPlus;
-    else if (activationFunction == "SoftSign")
-      ActivationFunctionType = NeuralEnums::ActivationFunction::SoftSign;
-    else
-      ActivationFunctionType = NeuralEnums::ActivationFunction::None;
+    const float DropuOutSize = layer["DropuOutSize"];
+    const float bias = layer["Bias"];
+    const size_t size = layer["Size"];
 
-    if (layerType == "HiddenLayer")
-      LayerType = NeuralEnums::LayerType::HiddenLayer;
-    else if (layerType == "InputLayer")
-      LayerType = NeuralEnums::LayerType::InputLayer;
-    else if (layerType == "OutputLayer")
-      LayerType = NeuralEnums::LayerType::OutputLayer;
-    else
-      LayerType = NeuralEnums::LayerType::None;
+    // ველის სახელს ლეიერის ნომერს ვამატებ, რომ შეცდომა მაშინვე იპოვებოდეს
+    char field[48];
+    snprintf(field, sizeof field, "layer %zu ActivationFunction", counter);
+    const NeuralEnums::ActivationFunction ActivationFunctionType =
+        ParseEnum<AF>(field, JsonStr(layer, "ActivationFunction", "None"),
+                      {{"None", AF::None},
+                       {"Sigmoid", AF::Sigmoid},
+                       {"Tanh", AF::Tanh},
+                       {"ReLU", AF::ReLU},
+                       {"MReLU", AF::MReLU},
+                       {"SoftMax", AF::SoftMax},
+                       {"GeLU", AF::GeLU},
+                       {"SoftPlus", AF::SoftPlus},
+                       {"SoftSign", AF::SoftSign}});
+
+    snprintf(field, sizeof field, "layer %zu Type", counter);
+    const NeuralEnums::LayerType LayerType =
+        ParseEnum<LT>(field, JsonStr(layer, "Type", "HiddenLayer"),
+                      {{"InputLayer", LT::InputLayer},
+                       {"HiddenLayer", LT::HiddenLayer},
+                       {"OutputLayer", LT::OutputLayer},
+                       {"None", LT::None}});
 
     auto l = new Layer(size, LayerType, ActivationFunctionType, bias,
                        DropuOutSize, neuralNetwork.BatchSize);
@@ -312,30 +324,35 @@ void ReadData(std::vector<std::vector<float>> &trainingSet,
 
   std::vector<int> _labels;
   std::vector<int> _testlabels;
-  ReadMNISTMod(trainingSet, _labels, true);
-  ReadMNISTMod(testSet, _testlabels, false);
+  const DataSetInfo ds = ChooseDataSet();
+  ReadMNISTMod(trainingSet, _labels, true, ds);
+  ReadMNISTMod(testSet, _testlabels, false, ds);
 
   if (trainingSet.size() == 0) {
     return;
   }
+
+  // EMNIST letters ლეიბლებს 1-იდან ითვლის, დანარჩენები 0-იდან
+  const int shift = (ds.name == "EMNIST letters") ? 1 : 0;
+  const size_t classes = (size_t)ds.classCount;
 
   int minmax[2];
   size_t totaltrain = trainingSet.size();
   labels.resize(totaltrain);
   for (size_t i = 0; i < totaltrain; i++) {
     Compress(trainingSet[i].data(), trainingSet[i].size(), minmax);
-    labels[i].resize(10);
-    for (size_t k = 0; k < 10; k++)
-      labels[i][k] = (_labels[i] == k ? 1.0f : 0.0f);
+    labels[i].resize(classes);
+    for (size_t k = 0; k < classes; k++)
+      labels[i][k] = ((size_t)(_labels[i] - shift) == k ? 1.0f : 0.0f);
   }
 
   size_t totalTest = testSet.size();
   testLabels.resize(totalTest);
   for (size_t k = 0; k < totalTest; k++) {
     Compress(testSet[k].data(), testSet[k].size(), minmax);
-    testLabels[k].resize(10);
-    for (size_t g = 0; g < 10; g++)
-      testLabels[k][g] = (_testlabels[k] == g ? 1.0f : 0.0f);
+    testLabels[k].resize(classes);
+    for (size_t g = 0; g < classes; g++)
+      testLabels[k][g] = ((size_t)(_testlabels[k] - shift) == g ? 1.0f : 0.0f);
   }
 }
 #ifdef USE_CUDA
@@ -353,6 +370,14 @@ void readDataAndTest() {
   std::vector<float> losses;
 
   initNeUnetFromJson(neuralNetwork);
+
+  // ქსელის ჩვენება ტრენინგის გარეშე: მონაცემების ჩატვირთვამდე ვჩერდებით,
+  // რადგან ის რამდენიმე წამია და ტოპოლოგიისთვის საჭირო არაა
+  if (gCli.topologyOnly) {
+    PrintNetworkInfo(neuralNetwork, 0);
+    return;
+  }
+
   cout << "start reading training+test data " << endl;
 
   auto begin = std::chrono::steady_clock::now();
@@ -417,7 +442,8 @@ void readDataAndTest() {
   {
     auto end = std::chrono::steady_clock::now();
     cout << "...done in " +
-                std::to_string(std::chrono::duration<double>(end - begin).count()) +
+                std::to_string(
+                    std::chrono::duration<double>(end - begin).count()) +
                 " seconds"
          << endl;
     size_t total = _trainingSet.size();
@@ -548,8 +574,9 @@ void readDataAndTest() {
         size_t digitCounter = 0;
         cout << std::to_string(g + 1) + " of " + std::to_string(globalEpochs) +
                     " done in " +
-                    std::to_string(std::chrono::duration<double>(
-                        endInside - beginInside).count()) +
+                    std::to_string(
+                        std::chrono::duration<double>(endInside - beginInside)
+                            .count()) +
                     " seconds. " + ". loss: " +
                     std::to_string(losses.size() > 0 ? losses[losses.size() - 1]
                                                      : 0)
@@ -579,7 +606,8 @@ void readDataAndTest() {
             endInside = std::chrono::steady_clock::now();
             cout << "...training set testing done in " +
                         std::to_string(std::chrono::duration<double>(
-                            endInside - beginInside).count()) +
+                                           endInside - beginInside)
+                                           .count()) +
                         " seconds. Result: " + std::to_string(result)
                  << endl;
           }
@@ -597,7 +625,7 @@ void readDataAndTest() {
                                   .Outputs,
                               neuralNetwork.Layers[neuralNetwork.LayersSize - 1]
                                   .Size) ==
-                  GetMaxIndex(testSet[i].label, (size_t)10))
+                  GetMaxIndex(testSet[i].label, testSet[i].labelSize))
                 counter++;
               digitCounter++;
             }
@@ -606,7 +634,8 @@ void readDataAndTest() {
             endInside = std::chrono::steady_clock::now();
             cout << "...testing set testing done in " +
                         std::to_string(std::chrono::duration<double>(
-                            endInside - beginInside).count()) +
+                                           endInside - beginInside)
+                                           .count()) +
                         " seconds. Result: " + std::to_string(result) +
                         ". loss: " + std::to_string(losses[losses.size() - 2])
                  << endl;
@@ -632,13 +661,19 @@ void readDataAndTest() {
 
     end = std::chrono::steady_clock::now();
     cout << "training done in " +
-                std::to_string(std::chrono::duration<double>(end - begin).count()) +
+                std::to_string(
+                    std::chrono::duration<double>(end - begin).count()) +
                 " seconds"
          << endl;
   }
 }
 
-int main() {
+int main(int argc, char **argv) {
+  gCli = ParseCli(argc, argv);
+  if (gCli.help || gCli.bad) {
+    PrintCliHelp(argv[0]);
+    return gCli.bad ? 1 : 0;
+  }
   srand(time(NULL));
   std::thread test(readDataAndTest);
   // std::thread test(testNet);

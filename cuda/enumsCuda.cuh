@@ -45,7 +45,6 @@ enum class LearningRateType {
   AdaMax,
   AMSGrad,
   Cyclic,
-  GuraMethod,
   Nadam,
   RMSProp,
   Static
